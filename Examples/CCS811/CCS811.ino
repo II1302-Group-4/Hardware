@@ -3,7 +3,7 @@
 CCS811 ccs(A2, A3);
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   
   ccs.init();
   ccs.setReadInterval(ccs.INTERVAL_1SEC);
