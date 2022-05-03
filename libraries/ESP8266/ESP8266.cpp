@@ -7,6 +7,10 @@ ESP8266::ESP8266(int rx, int tx, bool debug) {
 
 void ESP8266::init() {
     // Change baudrate of esp.
+    pinMode(13, OUTPUT);
+    digitalWrite(13, LOW);
+    delay(1000);
+    digitalWrite(13, HIGH);
     espSerial->begin(115200); // Default baud of esp is 115200.
     espSerial->print("AT+UART_CUR=9600,8,1,0,0\r\n");
 
