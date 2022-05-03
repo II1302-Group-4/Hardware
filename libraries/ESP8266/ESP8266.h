@@ -13,13 +13,13 @@ public:
     void connect(String ssid, String pwd);
     void openTCP(String ip, String port);
     void sendData(String data);
+    String pickupData();
+    String pickupData(const int timeout);
 private:
     SoftwareSerial* espSerial = NULL;
     bool DEBUG;
     void sendCmd(String cmd);
     String readResponse();
     String readResponse(const int timeout);
-    String pickupData();
-    String pickupData(const int timeout);
 };
 
