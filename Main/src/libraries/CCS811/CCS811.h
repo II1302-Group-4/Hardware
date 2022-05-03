@@ -8,7 +8,7 @@
 #define CCS811_h
 
 #include "Arduino.h"
-#include "Softi2c.h"
+#include "../Softi2c/Softi2c.h"
 
 static const uint8_t I2C_ADDRESS = 0x5A;
 static const uint8_t HWID = 0x81;

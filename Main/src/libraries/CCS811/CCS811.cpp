@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "CCS811.h"
-#include "Softi2c.h"
+#include "../Softi2c/Softi2c.h"
 
 CCS811::CCS811(int sda, int scl)
 {
