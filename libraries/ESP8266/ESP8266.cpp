@@ -1,58 +1,51 @@
 #include "ESP8266.h"
 
-ESP8266::ESP8266(int rx, int tx, bool debug) {
+ESP8266::ESP8266(int rx, int tx) {
     espSerial = new SoftwareSerial(rx, tx);
-    DEBUG = debug;
 }
+
+/*--------------------Public--------------------*/
 
 void ESP8266::init() {
     espSerial->begin(9600);
+    sendCmd("AT");
+    sendCmd("AT+CIPMUX=0");
+    sendCmd("AT+CWMODE=1");
+    flushESP();
     Serial.println("Initialization successful");
 }
 
-void ESP8266::test() {
-    sendCmd("AT");
-}
-
-void ESP8266::clientMode() {
-    sendCmd("AT+CWMODE=1");
-}
-
-void ESP8266::connect(String ssid, String pwd) {
+void ESP8266::connectToAP(String ssid, String pwd) {
     sendCmd("AT+CWJAP=\"" + ssid + "\",\"" + pwd + "\"");
+    flushESP();
 }
 
 void ESP8266::openTCP(String ip, String port) {
     sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
+    flushESP();
 }
 
 void ESP8266::sendData(String data) {
-    espSerial->print("AT+CIPSEND=" + data.length());
-    delay(200);
+    String len = "";
+    len += data.length();
+    sendCmd("AT+CIPSEND=" + len);
+    delay(500);
     espSerial->print(data);
+    readResponse();
+    
 }
 
-String ESP8266::pickupData() {
-    return pickupData(10000);
-}
+/*--------------------Private--------------------*/
 
-String ESP8266::pickupData(const int timeout) {
-    String data = "";
-    long int time = millis();
-    while ((time+timeout) > millis()) {
-        while (espSerial->available()) {
-            char c = espSerial->read(); // read the next character.
-            data += c;
-        }
-    }
-    return data;
+void ESP8266::flushESP() {
+    espSerial->flush();
+    while (espSerial->available())
+        espSerial->read();
 }
 
 void ESP8266::sendCmd(String cmd) {
-    espSerial->print(cmd + "\r\n");
-    if (DEBUG) {
-        Serial.print(readResponse());
-    }
+    espSerial->println(cmd);
+    readResponse();
 }
 
 String ESP8266::readResponse() {
@@ -64,12 +57,13 @@ String ESP8266::readResponse(const int timeout) {
     long int time = millis();
     while ((time+timeout) > millis()) {
         while (espSerial->available()) {
-            char c = espSerial->read(); // read the next character.
+            char c = espSerial->read();
             response += c;
+            Serial.print(c);
             if (response.substring(response.length() - 6).equals("\r\nOK\r\n") ||
                 response.substring(response.length() - 9).equals("\r\nERROR\r\n"))
                 return response;
         }
     }
-    return "Timed out";
+    return "Timed out\n";
 }
