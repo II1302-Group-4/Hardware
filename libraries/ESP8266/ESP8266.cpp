@@ -7,7 +7,6 @@ ESP8266::ESP8266(int rx, int tx, bool debug) {
 
 void ESP8266::init() {
     espSerial->begin(9600);
-    delay(1000);
     Serial.println("Initialization successful");
 }
 
@@ -25,6 +24,7 @@ void ESP8266::connect(String ssid, String pwd) {
 
 void ESP8266::openTCP(String ip, String port) {
     sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
+    Serial.print(pickupData());
 }
 
 void ESP8266::sendData(String data) {
@@ -35,7 +35,6 @@ void ESP8266::sendData(String data) {
 
 void ESP8266::sendCmd(String cmd) {
     espSerial->print(cmd + "\r\n");
-    delay(1000);
     if (DEBUG) {
         Serial.print(readResponse());
     }
@@ -58,4 +57,20 @@ String ESP8266::readResponse(const int timeout) {
         }
     }
     return "Timed out";
+}
+
+String ESP8266::pickupData() {
+    return pickupData(10000);
+}
+
+String ESP8266::pickupData(const int timeout) {
+    String data = "";
+    long int time = millis();
+    while ((time+timeout) > millis()) {
+        while (espSerial->available()) {
+            char c = espSerial->read(); // read the next character.
+            data += c;
+        }
+    }
+    return data;
 }

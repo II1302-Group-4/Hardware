@@ -16,9 +16,10 @@ public:
 private:
     SoftwareSerial* espSerial = NULL;
     bool DEBUG;
-    void flushSerial();
     void sendCmd(String cmd);
     String readResponse();
     String readResponse(const int timeout);
+    String pickupData();
+    String pickupData(const int timeout);
 };
 

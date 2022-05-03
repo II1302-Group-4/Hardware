@@ -12,10 +12,10 @@ void setup() {
     esp.init();
     esp.clientMode();
     esp.connect("Android Jakob", "leonboi11");
-    esp.openTCP(test_ip,"80");
-    //esp.httpPostTest("this is a text about birds.");
-    esp.sendCmd("this is a text");
-    esp.closeAll();
+<<<<<<< HEAD
+=======
+    esp.openTCP("time.nist.gov", "13");
+>>>>>>> 87b17cc0bdd0d556589492238b18727ce93780fe
 }
 
 void loop() {
