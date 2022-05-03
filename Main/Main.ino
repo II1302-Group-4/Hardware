@@ -1,40 +1,16 @@
-#include "CCS811.h"
-#include <SoftwareSerial.h>
+#include "ESP8266.h"
 
-SoftwareSerial wifiSerial(2, 3);      // RX, TX for ESP8266
-CCS811 ccs(A2, A3);
-
-bool DEBUG = true;   //show more logs
-int responseTime = 5000; //communication timeout
+ESP8266 esp(2, 3, true);
 
 void setup() {
-  Serial.begin(115200);
-  wifiSerial.begin(115200);
-  
-  ccs.init();
-  ccs.setReadInterval(ccs.INTERVAL_1SEC);
-
-  Serial.println("-----------------------------");
-  delay(200);
-  sendToWifi("AT+CWMODE=1",responseTime,DEBUG);
-  delay(1000);
-  sendToWifi("AT+CWJAP=\"Android Jakob\",\"leonboi11\"",responseTime,DEBUG);
-  delay(1000);
-  sendToWifi("AT+CIPSTART=\"TCP\",\"java.lab.ssvl.kth.se\",7",responseTime,DEBUG);
-  delay(1000);
-  ccs.fetchData();
-  String msg = "CO2: ";
-  msg = msg + String(ccs.getCO2()) + "\0";
-  sendData(msg);
-  
+    Serial.begin(9600);
+    Serial.println("\n------------------------");
+    esp.init();
+    esp.test();
+    esp.clientMode();
+    esp.connect("Android Jakob", "leonboi11");
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
-  //ccs.fetchData();
-
-  //Serial.print(ccs.getCO2());
-
 
 }

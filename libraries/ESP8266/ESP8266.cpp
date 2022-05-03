@@ -6,23 +6,9 @@ ESP8266::ESP8266(int rx, int tx, bool debug) {
 }
 
 void ESP8266::init() {
-    // Change baudrate of esp.
-    pinMode(13, OUTPUT);
-    digitalWrite(13, LOW);
-    delay(1000);
-    digitalWrite(13, HIGH);
-    espSerial->begin(115200); // Default baud of esp is 115200.
-    espSerial->print("AT+UART_CUR=9600,8,1,0,0\r\n");
-
-    // Initialize software uart on same baud.
     espSerial->begin(9600);
-    flushSerial();
-}
-
-void ESP8266::flushSerial() {
-    espSerial->flush();
-    while (espSerial->available())
-        espSerial->read();
+    delay(1000);
+    Serial.println("Initialization successful");
 }
 
 void ESP8266::test() {
@@ -49,10 +35,14 @@ void ESP8266::sendData(String data) {
 
 void ESP8266::sendCmd(String cmd) {
     espSerial->print(cmd + "\r\n");
+    delay(1000);
     if (DEBUG) {
-        Serial.print("sent: " + cmd + "\r\n");
-        Serial.print("resp: " + readResponse(1000));
+        Serial.print(readResponse());
     }
+}
+
+String ESP8266::readResponse() {
+    return readResponse(30000);
 }
 
 String ESP8266::readResponse(const int timeout) {
@@ -62,7 +52,10 @@ String ESP8266::readResponse(const int timeout) {
         while (espSerial->available()) {
             char c = espSerial->read(); // read the next character.
             response += c;
+            if (response.substring(response.length() - 6).equals("\r\nOK\r\n") ||
+                response.substring(response.length() - 9).equals("\r\nERROR\r\n"))
+                return response;
         }
     }
-    return response;
+    return "Timed out";
 }
