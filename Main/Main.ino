@@ -9,6 +9,7 @@ void setup() {
     esp.test();
     esp.clientMode();
     esp.connect("Android Jakob", "leonboi11");
+    esp.openTCP("time.nist.gov", "13");
 }
 
 void loop() {
