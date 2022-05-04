@@ -11,12 +11,13 @@ public:
     void connectToAP(String ssid, String pwd);
     void openTCP(String ip, String port);
     void closeTCP();
+    int status();
     void sendData(String data);
     void postData(String voc, String co2);
 private:
     SoftwareSerial* espSerial = NULL;
     void flushESP();
-    void sendCmd(String cmd);
+    String sendCmd(String cmd);
     String readResponse();
     String readResponse(const int timeout);
 };

@@ -24,8 +24,14 @@ void ESP8266::openTCP(String ip, String port) {
     flushESP();
 }
 
-void ESP8266::closeTCP(){
+void ESP8266::closeTCP() {
     sendCmd("AT+CIPCLOSE");
+}
+
+int ESP8266::status() {
+    String response = sendCmd("AT+CIPSTATUS");
+    int start = response.lastIndexOf("\r\nSTATUS:") + 9;
+    return response.substring(start, start + 1).toInt();
 }
 
 void ESP8266::sendData(String data) {
@@ -35,7 +41,6 @@ void ESP8266::sendData(String data) {
     delay(500);
     espSerial->print(data);
     readResponse();
-    
 }
 
 void ESP8266::postData(String voc, String co2) {
@@ -53,9 +58,9 @@ void ESP8266::flushESP() {
         espSerial->read();
 }
 
-void ESP8266::sendCmd(String cmd) {
+String ESP8266::sendCmd(String cmd) {
     espSerial->println(cmd);
-    readResponse();
+    return readResponse();
 }
 
 String ESP8266::readResponse() {

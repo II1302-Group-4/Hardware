@@ -17,7 +17,6 @@ void setup() {
     esp.connectToAP("Android Jakob", "leonboi11");
 
     Serial.println("\n---Setup completed---");
-    
 }
 
 void loop() {
@@ -27,9 +26,17 @@ void loop() {
     String co2 = String(ccs.getCO2());
 
     // Make a post to the database
-    esp.openTCP("pollusenseserver.azurewebsites.net", "80");
-    esp.postData(voc, co2);
-    esp.closeTCP();
+    switch (esp.status()) {
+        default:
+        case 1:
+        case 5:
+            esp.connectToAP("Android Jakob", "leonboi11");
+        case 2:
+        case 4:
+            esp.openTCP("pollusenseserver.azurewebsites.net", "80");
+        case 3:
+            esp.postData(voc, co2);
+    }
 
     // Wait <seconds> seconds
     int seconds = 10;
