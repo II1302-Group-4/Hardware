@@ -21,18 +21,20 @@ void setup() {
 }
 
 void loop() {
+    // Get sensor values
     ccs.fetchData();
-    String voc = "";
-    String co2 = "";
-    voc += ccs.getVOC();
-    co2 += ccs.getCO2();
+    String voc = String(ccs.getVOC());
+    String co2 = String(ccs.getCO2());
 
+    // Make a post to the database
     esp.openTCP("pollusenseserver.azurewebsites.net", "80");
     esp.postData(voc, co2);
     esp.closeTCP();
 
+    // Wait <seconds> seconds
+    int seconds = 10;
     Serial.println();
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < seconds; i++) {
         delay(1000);
         Serial.print(".");
     }
