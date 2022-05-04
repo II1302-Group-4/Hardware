@@ -25,6 +25,10 @@ void ESP8266::openTCP(String ip, String port) {
     flushESP();
 }
 
+void ESP8266::closeTCP(){
+    sendCmd("AT+CIPCLOSE");
+}
+
 void ESP8266::sendData(String data) {
     String len = "";
     len += data.length();
@@ -34,12 +38,14 @@ void ESP8266::sendData(String data) {
     readResponse();
     
 }
-void ESP8266::httpPost(String path, String data){
-    int len = data.length();
+void ESP8266::httpPost(String path, String host, String data){
+    String len = "";
+    len += data.length();
     sendCmd("POST " + path + " HTTP/1.1\r\n" +
-            "Content-Type: text/plain\r\n" +
-            "Content-Length: " + len + "\r\n" +
-            "Connection: Close" + "\r\n\r\n" +
+            "Host: " + host + "\r\n" +
+            //"Content-Type: application/json\r\n" +
+            "Content-Length: " + len + "\r\n\r\n" +
+            //"Connection: Close" + "\r\n\r\n" +
             data);
 }
 

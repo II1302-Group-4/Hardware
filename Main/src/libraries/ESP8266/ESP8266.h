@@ -11,7 +11,8 @@ public:
     void connectToAP(String ssid, String pwd);
     void openTCP(String ip, String port);
     void sendData(String data);
-    void httpPost(String path, String data);
+    void httpPost(String path, String host, String data);
+    void closeTCP();
 private:
     SoftwareSerial* espSerial = NULL;
     void flushESP();
