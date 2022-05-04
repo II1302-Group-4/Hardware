@@ -2,7 +2,6 @@
 #include "src/libraries/CCS811/CCS811.h"
 
 ESP8266 esp(2, 3);
-//CCS811 ccs(A2, A3);
 
 String url = "ptsv2.com/t/e1oit-1651498913";
 String test_ip = "216.239.34.21";
