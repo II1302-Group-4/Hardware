@@ -9,7 +9,7 @@ ESP8266::ESP8266(int rx, int tx) {
 void ESP8266::init() {
     espSerial->begin(9600);
     sendCmd("AT");
-    sendCmd("AT+CIPMUX=0");
+    //sendCmd("AT+CIPMUX=0");
     sendCmd("AT+CWMODE=1");
     flushESP();
     Serial.println("Initialization successful");
@@ -33,6 +33,14 @@ void ESP8266::sendData(String data) {
     espSerial->print(data);
     readResponse();
     
+}
+void ESP8266::httpPost(String path, String data){
+    int len = data.length();
+    sendCmd("POST " + path + " HTTP/1.1\r\n" +
+            "Content-Type: text/plain\r\n" +
+            "Content-Length: " + len + "\r\n" +
+            "Connection: Close" + "\r\n\r\n" +
+            data);
 }
 
 /*--------------------Private--------------------*/
