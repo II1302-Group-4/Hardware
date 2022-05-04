@@ -8,22 +8,16 @@ String url = "ptsv2.com/t/e1oit-1651498913";
 String test_ip = "216.239.34.21";
 String daytime = "java.lab.ssvl.kth.se";
 String ip = "192.168.43.44";
+String data = "{\"VOC\": {\"value\": \"10777\",\"unit\": \"ppb\"},\"CO2\": {\"value\": \"450\",\"unit\": \"ppm\"}}";
 
 void setup() {
     Serial.begin(9600);
     Serial.println("\n------------------------");
-//    ccs.init();
-//    ccs.setReadInterval(ccs.INTERVAL_1SEC);
-//    ccs.fetchData();
-//    String co2 = "";
-//    String voc = "";
-//    co2 += ccs.getCO2();
-//    voc += ccs.getVOC();
 
     esp.init();
     esp.connectToAP("Android Jakob", "leonboi11");
-    esp.openTCP(ip, "8080");
-    //esp.sendData("CO2: " + co2 + " VOC: " + voc);
+    esp.openTCP("pollusenseserver.azurewebsites.net", "80");
+    esp.postData(data);
 }
 
 void loop() {
