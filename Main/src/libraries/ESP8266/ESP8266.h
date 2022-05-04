@@ -10,8 +10,8 @@ public:
     void init();
     void connectToAP(String ssid, String pwd);
     void openTCP(String ip, String port);
+    void closeTCP();
     void sendData(String data);
-    void httpPost(String path, String data);
     void postData(String data);
 private:
     SoftwareSerial* espSerial = NULL;

@@ -39,20 +39,10 @@ void ESP8266::sendData(String data) {
     
 }
 
-void ESP8266::httpPost(String path, String data){
-    int len = data.length();
-    sendCmd("POST " + path + " HTTP/1.1\r\n" +
-            "Host: " + host + "\r\n" +
-            //"Content-Type: application/json\r\n" +
-            "Content-Length: " + len + "\r\n\r\n" +
-            //"Connection: Close" + "\r\n\r\n" +
-            data);
-}
-
 void ESP8266::postData(String data) {
     String len = "";
     len += data.length();
-    sendCmd("POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: " + len + "\r\n\r\n" + data);
+    sendData("POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: " + len + "\r\n\r\n" + data);
 }
 
 /*--------------------Private--------------------*/
