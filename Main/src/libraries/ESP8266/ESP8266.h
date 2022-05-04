@@ -12,7 +12,7 @@ public:
     void openTCP(String ip, String port);
     void closeTCP();
     void sendData(String data);
-    void postData(String data);
+    void postData(String voc, String co2);
 private:
     SoftwareSerial* espSerial = NULL;
     void flushESP();

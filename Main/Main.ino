@@ -2,23 +2,39 @@
 #include "src/libraries/CCS811/CCS811.h"
 
 ESP8266 esp(2, 3);
-
-String url = "ptsv2.com/t/e1oit-1651498913";
-String test_ip = "216.239.34.21";
-String daytime = "java.lab.ssvl.kth.se";
-String ip = "192.168.43.44";
-String data = "{\"VOC\": {\"value\": \"88888\",\"unit\": \"ppb\"},\"CO2\": {\"value\": \"450\",\"unit\": \"ppm\"}}";
+CCS811 ccs(A2, A3);
 
 void setup() {
     Serial.begin(9600);
     Serial.println("\n------------------------");
 
+    // Initialize sensor
+    ccs.init();
+    ccs.setReadInterval(ccs.INTERVAL_1SEC);
+
+    // Initialize wifi communication
     esp.init();
     esp.connectToAP("Android Jakob", "leonboi11");
-    esp.openTCP("pollusenseserver.azurewebsites.net", "80");
-    esp.postData(data);
+
+    Serial.println("\n---Setup completed---");
+    
 }
 
 void loop() {
+    ccs.fetchData();
+    String voc = "";
+    String co2 = "";
+    voc += ccs.getVOC();
+    co2 += ccs.getCO2();
 
+    esp.openTCP("pollusenseserver.azurewebsites.net", "80");
+    esp.postData(voc, co2);
+    esp.closeTCP();
+
+    Serial.println();
+    for (int i = 0; i < 10; i++) {
+        delay(1000);
+        Serial.print(".");
+    }
+    Serial.println();
 }

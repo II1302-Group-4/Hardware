@@ -9,7 +9,6 @@ ESP8266::ESP8266(int rx, int tx) {
 void ESP8266::init() {
     espSerial->begin(9600);
     sendCmd("AT");
-    //sendCmd("AT+CIPMUX=0");
     sendCmd("AT+CWMODE=1");
     flushESP();
     Serial.println("Initialization successful");
@@ -39,7 +38,8 @@ void ESP8266::sendData(String data) {
     
 }
 
-void ESP8266::postData(String data) {
+void ESP8266::postData(String voc, String co2) {
+    String data = "{\"VOC\": {\"value\": \"" + voc + "\",\"unit\": \"ppb\"},\"CO2\": {\"value\": \"" + co2 + "\",\"unit\": \"ppm\"}}";
     String len = "";
     len += data.length();
     sendData("POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: " + len + "\r\n\r\n" + data);
@@ -73,6 +73,11 @@ String ESP8266::readResponse(const int timeout) {
             if (response.substring(response.length() - 6).equals("\r\nOK\r\n") ||
                 response.substring(response.length() - 9).equals("\r\nERROR\r\n"))
                 return response;
+            else if (response.substring(response.length() - 5).equals("+IPD,")) {
+                delay(1000);
+                flushESP();
+                return response;
+            }
         }
     }
     return "Timed out\n";
