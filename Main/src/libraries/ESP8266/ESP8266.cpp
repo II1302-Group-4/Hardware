@@ -170,11 +170,9 @@ int ESP8266::getDays(String month){
     if(month.startsWith("JUL"))
         return days;
     days += 31;
-        days = 7;
     if(month.startsWith("AUG"))
         return days;
     days += 31;
-        days = 8;
     if(month.startsWith("SEP"))
         return days;
     days += 30;
