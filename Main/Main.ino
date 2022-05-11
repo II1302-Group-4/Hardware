@@ -10,11 +10,26 @@ const String SERVER_PORT = "80";
 const String DAYTIME_SERVER =  "java.lab.ssvl.kth.se";
 const String DAYTIME_SERVER_PORT = "13";
 long unixTime = 0;
+const int GREEN_LED = 8;
+const int RED_LED = 9;
 
 ESP8266 esp(2, 3);
 CCS811 ccs(A2, A3);
 
+void greenHighRedLow(){
+  digitalWrite(GREEN_LED, HIGH);
+  digitalWrite(RED_LED, LOW);
+}
+void greenLowRedHigh(){
+  digitalWrite(GREEN_LED, LOW);
+  digitalWrite(RED_LED, HIGH);
+}
+
 void setup() {
+    pinMode(GREEN_LED, OUTPUT);
+    pinMode(RED_LED, OUTPUT);
+    digitalWrite(GREEN_LED, LOW);
+    digitalWrite(RED_LED, LOW);
     Serial.begin(9600);
     Serial.println("\n------------------------");
 
@@ -33,10 +48,10 @@ void setup() {
         Serial.println("\n---SETUP FAILED---");
         delay(1000);
         exit(1);
-        // Set LED to indicate a failed setup.
+        greenHighRedLow();
     }
     Serial.println("\n---Setup completed---");
-    // Set LED to indicate a successful setup.
+    greenLowRedHigh();
     
 }
 
@@ -63,7 +78,11 @@ void loop() {
         case 3:
             esp.postData(String(unixTime), voc, co2);
     }
-    
+    if(esp.status() == 2)
+          greenHighRedLow();
+      else if(esp.status() == 1 || esp.status() == 0)
+          greenLowRedHigh();
+ 
 
     //Wait <seconds> seconds
     int seconds = 10;
