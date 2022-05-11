@@ -10,7 +10,7 @@ public:
     void init();
     void connectToAP(String ssid, String pwd);
     void openTCP(String ip, String port);
-    void closeTCP();
+    int closeTCP();
     int status();
     void sendData(String data);
     void postData(String unixTime, String voc, String co2);
@@ -24,7 +24,8 @@ private:
     String readResponseDaytime(const int timeout);
     String getSubstring(String str, String divider);
     String trimString(String str, String remove);
-    long calcUnixTime(String year, String month, String day, String hour, String minute, String second);
+    long getEpoch(String host, String port, int timeout);
+    long calcUnixTime(int year, String month, int day, int hour, int minute, int second);
     int getDays(String month);
 };
 

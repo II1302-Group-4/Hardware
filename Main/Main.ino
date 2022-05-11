@@ -1,14 +1,14 @@
 #include "src/libraries/ESP8266/ESP8266.h"
 #include "src/libraries/CCS811/CCS811.h"
 
-String WIFI_OHLSON = "Android Jakob";
-String PWD_OHLSON = "leonboi11";
-String WIFI_GOTBERG = "wifi_adefcade";
-String PWD_GOTBERG = "therobotsaretakingourjobs";
-String SERVER = "pollusenseserver.azurewebsites.net";
-String SERVER_PORT = "80";
-String DAYTIME_SERVER =  "java.lab.ssvl.kth.se";
-String DAYTIME_SERVER_PORT = "13";
+const String WIFI_OHLSON = "Android Jakob";
+const String PWD_OHLSON = "leonboi11";
+const String WIFI_GOTBERG = "wifi_adefcade";
+const String PWD_GOTBERG = "therobotsaretakingourjobs";
+const String SERVER = "pollusenseserver.azurewebsites.net";
+const String SERVER_PORT = "80";
+const String DAYTIME_SERVER =  "java.lab.ssvl.kth.se";
+const String DAYTIME_SERVER_PORT = "13";
 long unixTime = 0;
 
 ESP8266 esp(2, 3);
@@ -28,8 +28,16 @@ void setup() {
 
     // Get and calculate date
     unixTime = esp.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
-
+    if(unixTime == 0)
+    {
+        Serial.println("\n---SETUP FAILED---");
+        delay(1000);
+        exit(1);
+        // Set LED to indicate a failed setup.
+    }
     Serial.println("\n---Setup completed---");
+    // Set LED to indicate a successful setup.
+    
 }
 
 void loop() {
@@ -38,6 +46,10 @@ void loop() {
     ccs.fetchData();
     String voc = String(ccs.getVOC());
     String co2 = String(ccs.getCO2());
+
+    Serial.println("\n--Value--");
+    Serial.print(unixTime);
+    Serial.println("\n--Value--");
 
     // Make a post to the database
     switch (esp.status()) {
