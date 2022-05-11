@@ -1,5 +1,7 @@
 #include "ESP8266.h"
 
+const String HTTP_POST_HEADER = "POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: ";
+
 ESP8266::ESP8266(int rx, int tx) {
     espSerial = new SoftwareSerial(rx, tx);
 }
@@ -27,7 +29,7 @@ void ESP8266::openTCP(String ip, String port) {
 int ESP8266::closeTCP()
 {
     sendCmd("AT+CIPCLOSE");
-    if(status() == 2)
+    if(status() != 4)
         return 1;
     return 0;
 }
@@ -39,9 +41,6 @@ int ESP8266::status() {
 }
 
 void ESP8266::sendData(String data) {
-    Serial.println("DATA: ");
-    Serial.print(data);
-    Serial.println();
     String len = "";
     len += data.length();
     sendCmd("AT+CIPSEND=" + len);
@@ -51,34 +50,20 @@ void ESP8266::sendData(String data) {
 }
 //
 void ESP8266::postData(String time, String voc, String co2) {
-    Serial.println("time: ");
-    Serial.println(time);
-    String data1 = "{\"time\": \"" + time + "\",\"VOC\": {\"value\": \"" + voc + "\",\"unit\": \"ppb\"},\"CO2\": {\"value\": \"" + co2 + "\",\"unit\": \"ppm\"}}";
-    String data = "{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}";
-
-    String header = "POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: ";
     String len = "";
     String msgLen = "";
-    msgLen += data.length() + header.length() + 7;
+    int extraCharacters = 7; // '\r\n\r\n' and the length of the 'len', which is always 7 characters in this case.
+
+    String data = "{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}";
+    msgLen += data.length() + HTTP_POST_HEADER.length() + extraCharacters; 
     len += data.length();
     sendCmd("AT+CIPSEND=" + msgLen);
     delay(500);
-    espSerial->print("POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: ");
+    espSerial->print(HTTP_POST_HEADER);
     espSerial->print(len);
     espSerial->print("\r\n\r\n");
     espSerial->print(data);
     readResponse();
-
-
-
-    Serial.print("\n-- MsgLenght: ");
-    Serial.print(msgLen);
-    Serial.println(" --");
-    Serial.println("\n-- This is the MSG --");
-    Serial.print("POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: ");
-    Serial.print(len);
-    Serial.print("\r\n\r\n");
-    Serial.print(data);
 }
 
 /*
@@ -196,7 +181,7 @@ long ESP8266::calcUnixTime(int year, String month, int day, int hour, int minute
 
     month.toUpperCase();
     int days_in_year = getDays(month);
-    if(days_in_year < 0)
+    if(days_in_year < 0 || days_in_year > 365)
         return 0;
 
     days_in_year += day;
@@ -213,7 +198,6 @@ long ESP8266::calcUnixTime(int year, String month, int day, int hour, int minute
     return unixTime;
 }
 
-}
 
 int ESP8266::getDays(String month){
     int days = 0;

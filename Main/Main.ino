@@ -47,9 +47,9 @@ void loop() {
     String voc = String(ccs.getVOC());
     String co2 = String(ccs.getCO2());
 
-    Serial.println("\n--Value--");
+    Serial.println("\n--TIME--");
     Serial.print(unixTime);
-    Serial.println("\n--Value--");
+    Serial.println("\n--TIME--");
 
     // Make a post to the database
     switch (esp.status()) {
