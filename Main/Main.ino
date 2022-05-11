@@ -48,10 +48,10 @@ void setup() {
         Serial.println("\n---SETUP FAILED---");
         delay(1000);
         exit(1);
-        greenHighRedLow();
+        greenLowRedHigh();
     }
     Serial.println("\n---Setup completed---");
-    greenLowRedHigh();
+    greenHighRedLow();
     
 }
 
