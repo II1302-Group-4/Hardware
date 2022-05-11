@@ -1,4 +1,4 @@
-#include "src/libraries/ESP8266/ESP8266.h"
+#include "src/libraries/PolluSense/PolluSense.h"
 #include "src/libraries/CCS811/CCS811.h"
 
 const String WIFI_OHLSON = "Android Jakob";
@@ -7,13 +7,13 @@ const String WIFI_GOTBERG = "wifi_adefcade";
 const String PWD_GOTBERG = "therobotsaretakingourjobs";
 const String SERVER = "pollusenseserver.azurewebsites.net";
 const String SERVER_PORT = "80";
-const String DAYTIME_SERVER =  "java.lab.ssvl.kth.se";
+const String DAYTIME_SERVER = "java.lab.ssvl.kth.se";
 const String DAYTIME_SERVER_PORT = "13";
 long unixTime = 0;
 const int GREEN_LED = 8;
 const int RED_LED = 9;
 
-ESP8266 esp(2, 3);
+PolluSense pollu(2, 3);
 CCS811 ccs(A2, A3);
 
 void greenHighRedLow(){
@@ -38,11 +38,11 @@ void setup() {
     ccs.setReadInterval(ccs.INTERVAL_1SEC);
 
     // Initialize wifi communication
-    esp.init();
-    esp.connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
+    pollu.wifiModule->init();
+    pollu.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
 
     // Get and calculate date
-    unixTime = esp.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+    unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
     if(unixTime == 0)
     {
         Serial.println("\n---SETUP FAILED---");
@@ -67,22 +67,22 @@ void loop() {
     Serial.println("\n--TIME--");
 
     // Make a post to the database
-    switch (esp.status()) {
+    switch (pollu.wifiModule->status()) {
         default:
         case 1:
         case 5:
-            esp.connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
+            pollu.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
         case 2:
         case 4:
-            esp.openTCP(SERVER, SERVER_PORT);
+            pollu.wifiModule->openTCP(SERVER, SERVER_PORT);
         case 3:
-            esp.postData(String(unixTime), voc, co2);
+            pollu.postData(String(unixTime), voc, co2);
     }
-    if(esp.status() == 2)
-          greenHighRedLow();
-      else if(esp.status() == 1 || esp.status() == 0)
-          greenLowRedHigh();
- 
+
+    if (pollu.wifiModule->status() == 1 || pollu.wifiModule->status() == 5 || pollu.wifiModule->status() == 0)
+        greenLowRedHigh();
+    else
+        greenHighRedLow();
 
     //Wait <seconds> seconds
     int seconds = 10;

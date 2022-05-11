@@ -1,7 +1,5 @@
 #include "ESP8266.h"
 
-const String HTTP_POST_HEADER = "POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: ";
-
 ESP8266::ESP8266(int rx, int tx) {
     espSerial = new SoftwareSerial(rx, tx);
 }
@@ -21,13 +19,13 @@ void ESP8266::connectToAP(String ssid, String pwd) {
     flushESP();
 }
 
-void ESP8266::openTCP(String ip, String port) {
-    sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
+String ESP8266::openTCP(String ip, String port) {
+    String response = sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
     flushESP();
+    return response;
 }
 
-int ESP8266::closeTCP()
-{
+int ESP8266::closeTCP() {
     sendCmd("AT+CIPCLOSE");
     if(status() != 4)
         return 1;
@@ -47,31 +45,6 @@ void ESP8266::sendData(String data) {
     delay(500);
     espSerial->print(data);
     readResponse();
-}
-//
-void ESP8266::postData(String time, String voc, String co2) {
-    String len = "";
-    String msgLen = "";
-    int extraCharacters = 7; // '\r\n\r\n' and the length of the 'len', which is always 7 characters in this case.
-
-    String data = "{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}";
-    msgLen += data.length() + HTTP_POST_HEADER.length() + extraCharacters; 
-    len += data.length();
-    sendCmd("AT+CIPSEND=" + msgLen);
-    delay(500);
-    espSerial->print(HTTP_POST_HEADER);
-    espSerial->print(len);
-    espSerial->print("\r\n\r\n");
-    espSerial->print(data);
-    readResponse();
-}
-
-/*
- * This function returns the approximate UNIX time, note that 
- * disregards leap seconds.
- */
-long ESP8266::getEpoch(String host, String port){
-    return getEpoch(host, port, 5000);
 }
 
 /*--------------------Private--------------------*/
@@ -101,140 +74,19 @@ String ESP8266::readResponse(const int timeout) {
             Serial.print(c);
             if (response.substring(response.length() - 6).equals("\r\nOK\r\n") ||
                 response.substring(response.length() - 9).equals("\r\nERROR\r\n"))
-                return response;
+                if (espSerial->available())
+                    continue;
+                else
+                    return response;
             else if (response.substring(response.length() - 5).equals("+IPD,")) {
                 delay(1000);
                 flushESP();
                 return response;
             }
-        }
-    }
-    return "Timed out\n";
-}
-
-String ESP8266::readResponseDaytime(const int timeout){
-    String response = "";
-    long int time = millis();
-    while ((time+timeout) > millis())
-    {
-        while(espSerial->available())
-        {
-            char c = espSerial->read();
-            response += c;
-            Serial.print(c);
-            if(response.endsWith("CLOSED"))
+            else if(response.endsWith("CLOSED"))
                 return response;
         }
     }
+    Serial.print("Timed out\n");
     return "";
-}
-
-String ESP8266::getSubstring(String str, String divider){
-    int pos = str.indexOf(divider);
-    return str.substring(0,pos);
-}
-
-String ESP8266::trimString(String str, String remove){
-    int len = remove.length();
-    return str.substring(len + 1);
-}
-
-long ESP8266::getEpoch(String host, String port, int timeout){
-    int time = millis();
-    bool connected = false;
-    int position;
-    String response;
-
-    // If the ESP8266 can't connected to the daytime-server within
-    // the timeout, the setup fails.
-    espSerial->println("AT+CIPSTART=\"TCP\",\"" + host + "\"," + port);
-    response = readResponseDaytime(timeout);
-    if(response == "")
-        return 0;
-
-    position = response.lastIndexOf("+IPD");
-    response = response.substring(position + 8);
-
-    String day = getSubstring(response, " ");
-    String month = getSubstring(response = trimString(response, day), " ");
-    String year = getSubstring(response = trimString(response, month), " ");
-    String hour = getSubstring(response = trimString(response, year), ":");
-    String minute = getSubstring(response = trimString(response, hour), ":");
-    String second = getSubstring(trimString(response, minute), " ");
-
-    return calcUnixTime(year.toInt(), month, day.toInt(), hour.toInt(), minute.toInt(), second.toInt());
-}
-
-long ESP8266::calcUnixTime(int year, String month, int day, int hour, int minute, int second){
-    long unixTime = 0;
-
-    if(year < 1970)
-        return 0;
-    if(day <= 0 || day > 31)
-        return 0;
-    if(hour < 0 || hour > 23)
-        return 0;
-    if(minute < 0 || minute > 59)
-        return 0;
-    if(second < 0 || second > 59)
-        return 0;
-
-    month.toUpperCase();
-    int days_in_year = getDays(month);
-    if(days_in_year < 0 || days_in_year > 365)
-        return 0;
-
-    days_in_year += day;
-    unixTime = (year - 1970) * 31556926;
-    unixTime += days_in_year * 86400;
-    unixTime += hour * 3600; 
-    unixTime += minute * 60;
-    unixTime += second;
-    
-    // Adds a constant amount of time to adjust for the year constant,
-    // which is not exact.116 minutes to be exact. 
-    // This was found through testing.
-    unixTime += (116 * 60);
-    return unixTime;
-}
-
-
-int ESP8266::getDays(String month){
-    int days = 0;
-    if(month.startsWith("JAN"))
-        return days;
-    days += 31;
-    if(month.startsWith("FEB"))
-        return days;
-    days += 28;
-    if(month.startsWith("MAR"))
-        return days;
-    days += 31;
-    if(month.startsWith("APR"))
-        return days;
-    days += 30;
-    if(month.startsWith("MAY"))
-        return days;
-    days += 31;
-    if(month.startsWith("JUN"))
-        return days;
-    days += 30;
-    if(month.startsWith("JUL"))
-        return days;
-    days += 31;
-    if(month.startsWith("AUG"))
-        return days;
-    days += 31;
-    if(month.startsWith("SEP"))
-        return days;
-    days += 30;
-    if(month.startsWith("OCT"))
-        return days;
-    days += 31;
-    if(month.startsWith("NOV"))
-        return days;
-    days += 30;
-    if(month.startsWith("DEC"))
-        return days;
-    return -1;
 }
