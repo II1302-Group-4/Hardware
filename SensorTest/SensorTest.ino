@@ -2,6 +2,7 @@
 #include "src/libraries/Softi2c/Softi2c.h"
 #include "src/libraries/ArduinoUnit/src/ArduinoUnit.h"
 
+//Start of I2C tests
 
 test(writeOneByte)
 {
@@ -27,6 +28,13 @@ test(writeFourByte)
   assertEqual(i2c.symbolStream, "S00011110R11101000R10101010R00000000R00010001R00111100RE", i2c.symbolStream);
 }
 
+test(writeNull)
+{
+  Softi2c i2c(A2, A3);
+  i2c.write(0b00001111, 0b11101000, NULL, 0);
+  assertEqual(i2c.symbolStream, "S00011110R11101000RE", i2c.symbolStream);
+}
+
 test(readTwoByte)
 {
   Softi2c i2c(A2, A3);
@@ -38,8 +46,8 @@ test(readTwoByte)
 test(performance)
 {
   long clockCycles = 9 * (3 + 20);
-  long maxTime = clockCycles * 1000; //Min is 1KHz
-  long minTime = clockCycles * 2.5;  //Max is 400KHz
+  long maxTime = clockCycles * 1000; //Min is 1KHz = 1000 microseconds per clock
+  long minTime = clockCycles * 2.5;  //Max is 400KHz = 2.5 microseconds per clock
   
   Softi2c i2c(A2, A3);
   uint8_t data[20];
@@ -47,7 +55,29 @@ test(performance)
   i2c.read(0b00001111, 0b11101000, data, 2);
   long timet = micros() - startTime;
 
-  assertEqual(timet > minTime && timet < maxTime, true, timet);
+  assertEqual(timet > minTime && timet < maxTime, true, "Data transfer speed not in bound");
+}
+
+//Start of CCS811 tests
+
+test(sensorConectionEstablished)
+{
+  CCS811 ccs(A2, A3);
+  assertEqual(ccs.init(), true, "Sensor faild to start");
+}
+
+test(rejectIncorrectI2CSddress)
+{
+  CCS811 ccs(A2, A3);
+  ccs.I2C_ADDRESS = 0x5B;
+  assertEqual(ccs.init(), false, "Responded to incorrect i2c address");
+}
+
+test(rejectIncorrectHardwareID)
+{
+  CCS811 ccs(A2, A3);
+  ccs.HWID = 0x80;
+  assertEqual(ccs.init(), false, "Accepted incorrect hardwareID");
 }
 
 void setup()
