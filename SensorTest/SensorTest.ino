@@ -1,6 +1,6 @@
 #include "src/libraries/CCS811/CCS811.h"
 #include "src/libraries/Softi2c/Softi2c.h"
-#include <ArduinoUnit.h>
+#include "src/libraries/ArduinoUnit/src/ArduinoUnit.h"
 
 
 test(writeOneByte)
@@ -35,11 +35,26 @@ test(readTwoByte)
   assertEqual(i2c.symbolStream, "S00011110R11101000RES00011111RRRRRRRRRARRRRRRRRNE", i2c.symbolStream);
 }
 
+test(performance)
+{
+  long clockCycles = 9 * (3 + 20);
+  long maxTime = clockCycles * 1000; //Min is 1KHz
+  long minTime = clockCycles * 2.5;  //Max is 400KHz
+  
+  Softi2c i2c(A2, A3);
+  uint8_t data[20];
+  long startTime = micros();
+  i2c.read(0b00001111, 0b11101000, data, 2);
+  long timet = micros() - startTime;
+
+  assertEqual(timet > minTime && timet < maxTime, true, timet);
+}
+
 void setup()
 {
   delay(2000);
   Serial.begin(9600);
-  while(!Serial) {} // Portability for Leonardo/Micro
+  while(!Serial) {}
 
 }
 

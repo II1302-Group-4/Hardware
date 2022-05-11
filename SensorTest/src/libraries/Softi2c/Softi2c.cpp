@@ -234,5 +234,5 @@ void Softi2c::writeByte(uint8_t byte)
 
 void Softi2c::wait()
 {
-    delayMicroseconds(100);
+    delayMicroseconds(50);
 }
