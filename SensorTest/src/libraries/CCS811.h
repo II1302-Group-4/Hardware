@@ -1,9 +1,3 @@
-/*
- *
- 3      Created by Andreas Nyström.
- 4
- */
-
 #ifndef CCS811_h
 #define CCS811_h
 

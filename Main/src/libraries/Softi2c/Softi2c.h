@@ -1,9 +1,3 @@
-/*
- *
- *      Created by Andreas Nyström.
- *
- */
-
 #ifndef Softi2c_h
 #define Softi2c_h
 
@@ -17,6 +11,7 @@ public:
     void read(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size);
     void write(uint8_t address, uint8_t reg, uint8_t data);
     void write(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size);
+    String symbolStream;
 private:
     bool readMultipleData(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size);
     bool writeMultipleData(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size);

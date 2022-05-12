@@ -4,6 +4,7 @@
 
 //Start of I2C tests
 
+//unit test
 test(writeOneByte)
 {
   Softi2c i2c(A2, A3);
@@ -12,6 +13,7 @@ test(writeOneByte)
   assertEqual(i2c.symbolStream, "S00011110R11110000R10110010RE", i2c.symbolStream);
 }
 
+//unit test
 test(readOneByte)
 {
   Softi2c i2c(A2, A3);
@@ -20,6 +22,7 @@ test(readOneByte)
   assertEqual(i2c.symbolStream, "S00011110R11110000RES00011111RRRRRRRRRNE", i2c.symbolStream);
 }
 
+//unit test
 test(writeFourByte)
 {
   Softi2c i2c(A2, A3);
@@ -28,6 +31,7 @@ test(writeFourByte)
   assertEqual(i2c.symbolStream, "S00011110R11101000R10101010R00000000R00010001R00111100RE", i2c.symbolStream);
 }
 
+//unit test
 test(writeNull)
 {
   Softi2c i2c(A2, A3);
@@ -35,6 +39,7 @@ test(writeNull)
   assertEqual(i2c.symbolStream, "S00011110R11101000RE", i2c.symbolStream);
 }
 
+//unit test
 test(readTwoByte)
 {
   Softi2c i2c(A2, A3);
@@ -43,6 +48,7 @@ test(readTwoByte)
   assertEqual(i2c.symbolStream, "S00011110R11101000RES00011111RRRRRRRRRARRRRRRRRNE", i2c.symbolStream);
 }
 
+//performance test
 test(performance)
 {
   long clockCycles = 9 * (3 + 20);

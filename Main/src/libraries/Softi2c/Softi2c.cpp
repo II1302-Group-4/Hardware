@@ -1,9 +1,3 @@
-/*
- *
- *      Created by Andreas Nyström.
- *
- */
-
 #include "Arduino.h"
 #include "Softi2c.h"
 
@@ -19,7 +13,7 @@ uint8_t Softi2c::read(uint8_t address, uint8_t reg)
 {
     uint8_t buf[1];
     
-    while(!readMultipleData(address, reg, buf, 1))
+    if(!readMultipleData(address, reg, buf, 1))
     {
         stopCondition();
         Serial.println("ERROR");
@@ -30,7 +24,7 @@ uint8_t Softi2c::read(uint8_t address, uint8_t reg)
 
 void Softi2c::read(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size)
 {
-    while(!readMultipleData(address, reg, data, size))
+    if(!readMultipleData(address, reg, data, size))
     {
         stopCondition();
         Serial.println("ERROR");
@@ -39,16 +33,18 @@ void Softi2c::read(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size)
 
 bool Softi2c::readMultipleData(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size)
 {
+    symbolStream = "";
+    
     startCondition();
     writeByte(address << 1 | 0);
-    if(!readAck()){return false;}
+    if(!readAck()){}
     writeByte(reg);
-    if(!readAck()){return false;}
+    if(!readAck()){}
     stopCondition();
     
     startCondition();
     writeByte(address << 1 | 1);
-    if(!readAck()){return false;}
+    if(!readAck()){}
     
     for(uint8_t i = 0; i < size; i++)
     {
@@ -69,7 +65,7 @@ void Softi2c::write(uint8_t address, uint8_t reg, uint8_t data)
 {
     uint8_t buf[1] = {data};
     
-    while(!writeMultipleData(address, reg, buf, 1))
+    if(!writeMultipleData(address, reg, buf, 1))
     {
         stopCondition();
         Serial.println("ERROR");
@@ -78,7 +74,7 @@ void Softi2c::write(uint8_t address, uint8_t reg, uint8_t data)
 
 void Softi2c::write(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size)
 {
-    while(!writeMultipleData(address, reg, data, size))
+    if(!writeMultipleData(address, reg, data, size))
     {
         stopCondition();
         Serial.println("ERROR");
@@ -87,17 +83,19 @@ void Softi2c::write(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size)
 
 bool Softi2c::writeMultipleData(uint8_t address, uint8_t reg, uint8_t* data, uint8_t size)
 {
+    symbolStream = "";
+    
     startCondition();
     writeByte(address << 1 | 0);
-    if(!readAck()){return false;}
+    if(!readAck()){}
     writeByte(reg);
-    if(!readAck()){return false;}
+    if(!readAck()){}
     
     for(uint8_t i = 0; i < size; i++)
     {
         writeByte(data[i]);
         
-        if(!readAck()){return false;}
+        if(!readAck()){}
     }
     
     stopCondition();
@@ -134,6 +132,8 @@ void Softi2c::sclHi()
 
 void Softi2c::startCondition()
 {
+    symbolStream += "S";
+    
     sdaHi();
     sclHi();
     wait();
@@ -145,6 +145,8 @@ void Softi2c::startCondition()
 
 void Softi2c::stopCondition()
 {
+    symbolStream += "E";
+    
     sdaLo();
     wait();
     sclHi();
@@ -174,16 +176,22 @@ bool Softi2c::readNack()
 
 void Softi2c::writeAck()
 {
-    writeBit(false);
+    symbolStream += "A";
+    sdaLo();
+    pulse();
 }
 
 void Softi2c::writeNack()
 {
-    writeBit(true);
+    symbolStream += "N";
+    sdaHi();
+    pulse();
 }
 
 bool Softi2c::readBit()
 {
+    symbolStream += "R";
+    
     bool data;
     sclHi();
     data = digitalRead(_sda);
@@ -205,6 +213,8 @@ uint8_t Softi2c::readByte()
 
 void Softi2c::writeBit(bool bit)
 {
+    symbolStream += bit ? "1" : "0";
+    
     if(bit) {sdaHi();} else {sdaLo();}
     pulse();
 }
@@ -218,5 +228,5 @@ void Softi2c::writeByte(uint8_t byte)
 
 void Softi2c::wait()
 {
-    delayMicroseconds(100);
+    delayMicroseconds(50);
 }
