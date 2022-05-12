@@ -24,7 +24,7 @@ bool CCS811::init()
     delay(100);
     
     //check for error
-    if(i2c->read(I2C_ADDRESS, STATUS_REGISTER) != 0x90);// should be 0x90
+    if(i2c->read(I2C_ADDRESS, STATUS_REGISTER) != 0x90)// should be 0x90
         return false;
     
     //set drive mode 1 sec default

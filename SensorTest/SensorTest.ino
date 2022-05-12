@@ -66,12 +66,14 @@ test(performance)
 
 //Start of CCS811 tests
 
+//Component test
 test(sensorConectionEstablished)
 {
   CCS811 ccs(A2, A3);
   assertEqual(ccs.init(), true, "Sensor faild to start");
 }
 
+//Component test
 test(rejectIncorrectI2CSddress)
 {
   CCS811 ccs(A2, A3);
@@ -79,6 +81,7 @@ test(rejectIncorrectI2CSddress)
   assertEqual(ccs.init(), false, "Responded to incorrect i2c address");
 }
 
+//Component test
 test(rejectIncorrectHardwareID)
 {
   CCS811 ccs(A2, A3);
@@ -86,12 +89,23 @@ test(rejectIncorrectHardwareID)
   assertEqual(ccs.init(), false, "Accepted incorrect hardwareID");
 }
 
+//Component test
+test(fetchData)
+{
+  CCS811 ccs(A2, A3);
+  assertEqual(ccs.init(), true, "Sensor failed to start");
+  ccs.fetchData();
+  uint16_t voc = ccs.getVOC();
+  uint16_t co2 = ccs.getCO2();
+  assertEqual(voc, 0, "VOC not correct");
+  assertEqual(co2, 400, "CO2 not correct");
+}
+
 void setup()
 {
   delay(2000);
   Serial.begin(9600);
   while(!Serial) {}
-
 }
 
 void loop()
