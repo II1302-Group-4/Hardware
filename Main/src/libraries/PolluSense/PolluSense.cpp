@@ -36,28 +36,23 @@ String PolluSense::trimString(String str, String remove){
 }
 
 long PolluSense::getEpoch(String host, String port, int timeout){
-    int time = millis();
-    bool connected = false;
-    int position;
-    String response;
+    Response res = wifiModule->openTCP(host, port);
+    String response = res.data;
+    Serial.println(response);
 
     // If the ESP8266 can't connected to the daytime-server within
     // the timeout, the setup fails.
-    response = wifiModule->openTCP(host, port);
     if(response == "")
         return 0;
-
-    position = response.lastIndexOf("+IPD");
-    response = response.substring(position + 8);
-
     String day = getSubstring(response, " ");
     String month = getSubstring(response = trimString(response, day), " ");
     String year = getSubstring(response = trimString(response, month), " ");
     String hour = getSubstring(response = trimString(response, year), ":");
     String minute = getSubstring(response = trimString(response, hour), ":");
     String second = getSubstring(trimString(response, minute), " ");
-
-    return calcUnixTime(year.toInt(), month, day.toInt(), hour.toInt(), minute.toInt(), second.toInt());
+    
+    Serial.println("HEJHEJ");
+    Serial.println(calcUnixTime(year.toInt(), month, day.toInt(), hour.toInt(), minute.toInt(), second.toInt()));
 }
 
 long PolluSense::calcUnixTime(int year, String month, int day, int hour, int minute, int second){

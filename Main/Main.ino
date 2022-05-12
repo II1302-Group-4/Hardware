@@ -16,11 +16,11 @@ const int RED_LED = 9;
 PolluSense pollu(2, 3);
 CCS811 ccs(A2, A3);
 
-void greenHighRedLow(){
+void greenHighRedLow() {
   digitalWrite(GREEN_LED, HIGH);
   digitalWrite(RED_LED, LOW);
 }
-void greenLowRedHigh(){
+void greenLowRedHigh() {
   digitalWrite(GREEN_LED, LOW);
   digitalWrite(RED_LED, HIGH);
 }
@@ -39,7 +39,7 @@ void setup() {
 
     // Initialize wifi communication
     pollu.wifiModule->init();
-    pollu.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
+    pollu.wifiModule->connectToAP(WIFI_OHLSON, PWD_OHLSON);
 
     // Get and calculate date
     unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
@@ -71,7 +71,7 @@ void loop() {
         default:
         case 1:
         case 5:
-            pollu.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
+            pollu.wifiModule->connectToAP(WIFI_OHLSON, PWD_OHLSON);
         case 2:
         case 4:
             pollu.wifiModule->openTCP(SERVER, SERVER_PORT);

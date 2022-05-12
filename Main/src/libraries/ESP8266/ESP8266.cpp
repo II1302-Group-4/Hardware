@@ -10,6 +10,7 @@ void ESP8266::init() {
     espSerial->begin(9600);
     sendCmd("AT");
     sendCmd("AT+CWMODE=1");
+    sendCmd("AT+CIPMUX=0");
     flushESP();
     Serial.println("Initialization successful");
 }
@@ -19,8 +20,8 @@ void ESP8266::connectToAP(String ssid, String pwd) {
     flushESP();
 }
 
-String ESP8266::openTCP(String ip, String port) {
-    String response = sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
+Response ESP8266::openTCP(String ip, String port) {
+    Response response = sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port, true);
     flushESP();
     return response;
 }
@@ -33,7 +34,7 @@ int ESP8266::closeTCP() {
 }
 
 int ESP8266::status() {
-    String response = sendCmd("AT+CIPSTATUS");
+    String response = sendCmd("AT+CIPSTATUS").msg;
     int start = response.lastIndexOf("\r\nSTATUS:") + 9;
     return response.substring(start, start + 1).toInt();
 }
@@ -55,36 +56,79 @@ void ESP8266::flushESP() {
         espSerial->read();
 }
 
-String ESP8266::sendCmd(String cmd) {
+Response ESP8266::sendCmd(String cmd) {
+    return sendCmd(cmd, false);
+}
+
+Response ESP8266::sendCmd(String cmd, bool dataExpected) {
     espSerial->println(cmd);
-    return readResponse();
+    Response response = { "", "" };
+    Serial.println("Response:");
+    response.msg = readResponse();
+    Serial.println("----------");
+    if (dataExpected) {
+        Serial.println("Data:");
+        response.data = readData();
+        Serial.println("----------");
+    }
+    return response;
 }
 
 String ESP8266::readResponse() {
-    return readResponse(30000);
+    return readResponse(15000);
 }
 
 String ESP8266::readResponse(const int timeout) {
-    String response = "";
+    String msg = "";
+    char c;
     long int time = millis();
     while ((time+timeout) > millis()) {
         while (espSerial->available()) {
-            char c = espSerial->read();
-            response += c;
+            c = espSerial->read();
+            msg += c;
             Serial.print(c);
-            if (response.substring(response.length() - 6).equals("\r\nOK\r\n") ||
-                response.substring(response.length() - 9).equals("\r\nERROR\r\n"))
-                if (espSerial->available())
-                    continue;
-                else
-                    return response;
-            else if (response.substring(response.length() - 5).equals("+IPD,")) {
-                delay(1000);
-                flushESP();
-                return response;
+            if (msg.endsWith("\r\nOK\r\n") || msg.endsWith("\r\nERROR\r\n")) {
+                return msg;
             }
-            else if(response.endsWith("CLOSED"))
-                return response;
+        }
+    }
+    Serial.print("Timed out\n");
+    return "";
+}
+
+String ESP8266::readData() {
+    return readData(15000);
+}
+
+String ESP8266::readData(const int timeout) {
+    String data = "";
+    char c;
+    long int time = millis();
+    while ((time+timeout) > millis()) {
+        while (espSerial->available()) {
+            c = espSerial->read();
+            data += c;
+            Serial.print(c);
+            if (data.endsWith("+IPD,")) {
+                String slen = "";
+                delay(100);
+                while (espSerial->available()) {
+                    c = espSerial->read();
+                    if (c == ':')
+                        break;
+                    slen += c;
+                }
+                data = "";
+                int len = slen.toInt();
+                char c;
+                for (int i = 0; i < len; i++) {
+                    while (!espSerial->available());
+                    c = espSerial->read();
+                    data += c;
+                    Serial.print(c);
+                }
+                return data;
+            }
         }
     }
     Serial.print("Timed out\n");
