@@ -63,13 +63,9 @@ Response ESP8266::sendCmd(String cmd) {
 Response ESP8266::sendCmd(String cmd, bool dataExpected) {
     espSerial->println(cmd);
     Response response = { "", "" };
-    Serial.println("Response:");
     response.msg = readResponse();
-    Serial.println("----------");
     if (dataExpected) {
-        Serial.println("Data:");
         response.data = readData();
-        Serial.println("----------");
     }
     return response;
 }
@@ -95,6 +91,25 @@ String ESP8266::readResponse(const int timeout) {
     Serial.print("Timed out\n");
     return "";
 }
+
+String ESP8266::readResponseChar(const int timeout)
+{
+    char buffer[100]; 
+    char c;
+    int i = 0;
+    long int time = millis();
+    while ((time+timeout) > millis()) {
+        while (espSerial->available()) {
+            buffer[i++] = espSerial->read();
+            Serial.print(c);
+            if(buffer[i-3] == 79 && buffer[i-2] == 75 && buffer[i-1] == 13 && buffer[10] == 10)
+                return String(buffer); 
+        }
+    }
+    Serial.print("Timed out\n");
+    return "";
+}
+
 
 String ESP8266::readData() {
     return readData(15000);

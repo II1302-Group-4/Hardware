@@ -26,6 +26,7 @@ private:
     Response sendCmd(String cmd, bool dataExpected);
     String readResponse();
     String readResponse(const int timeout);
+    String readResponseChar(const int timeout);
     String readData();
     String readData(const int timeout);
 };

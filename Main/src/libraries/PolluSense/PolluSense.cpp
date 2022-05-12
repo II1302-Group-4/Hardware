@@ -38,7 +38,6 @@ String PolluSense::trimString(String str, String remove){
 long PolluSense::getEpoch(String host, String port, int timeout){
     Response res = wifiModule->openTCP(host, port);
     String response = res.data;
-    Serial.println(response);
 
     // If the ESP8266 can't connected to the daytime-server within
     // the timeout, the setup fails.
@@ -50,12 +49,15 @@ long PolluSense::getEpoch(String host, String port, int timeout){
     String hour = getSubstring(response = trimString(response, year), ":");
     String minute = getSubstring(response = trimString(response, hour), ":");
     String second = getSubstring(trimString(response, minute), " ");
-    
-    Serial.println("HEJHEJ");
-    Serial.println(calcUnixTime(year.toInt(), month, day.toInt(), hour.toInt(), minute.toInt(), second.toInt()));
+
+    char monthArray[4];
+    month.toUpperCase();
+    month.toCharArray(monthArray, 4);
+
+    return calcUnixTime(year.toInt(), monthArray, day.toInt(), hour.toInt(), minute.toInt(), second.toInt());
 }
 
-long PolluSense::calcUnixTime(int year, String month, int day, int hour, int minute, int second){
+long PolluSense::calcUnixTime(int year, char month[], int day, int hour, int minute, int second){
     long unixTime = 0;
 
     if(year < 1970)
@@ -69,7 +71,7 @@ long PolluSense::calcUnixTime(int year, String month, int day, int hour, int min
     if(second < 0 || second > 59)
         return 0;
 
-    month.toUpperCase();
+
     int days_in_year = getDays(month);
     if(days_in_year < 0 || days_in_year > 365)
         return 0;
@@ -89,42 +91,38 @@ long PolluSense::calcUnixTime(int year, String month, int day, int hour, int min
 }
 
 
-int PolluSense::getDays(String month) {
-    int days = 0;
-    if(month.startsWith("JAN"))
-        return days;
-    days += 31;
-    if(month.startsWith("FEB"))
-        return days;
-    days += 28;
-    if(month.startsWith("MAR"))
-        return days;
-    days += 31;
-    if(month.startsWith("APR"))
-        return days;
-    days += 30;
-    if(month.startsWith("MAY"))
-        return days;
-    days += 31;
-    if(month.startsWith("JUN"))
-        return days;
-    days += 30;
-    if(month.startsWith("JUL"))
-        return days;
-    days += 31;
-    if(month.startsWith("AUG"))
-        return days;
-    days += 31;
-    if(month.startsWith("SEP"))
-        return days;
-    days += 30;
-    if(month.startsWith("OCT"))
-        return days;
-    days += 31;
-    if(month.startsWith("NOV"))
-        return days;
-    days += 30;
-    if(month.startsWith("DEC"))
-        return days;
+int PolluSense::getDays(char month[]) {
+
+    //January 
+    if(month[0] == 74 && month[1] == 65)
+        return 0;
+    //February 
+    if(month[0] == 70)
+        return 31;
+    //Mars
+    if(month[0] == 77 && month[1] == 65 && month[2] == 82)
+        return 59;
+    //May
+    if(month[0] == 77 && month[1] == 65 && month[2] == 89)
+        return 121;
+    //June
+    if(month[0] == 74 && month[1] == 85 && month[2] == 78)
+        return 152;
+    //July
+    if(month[0] == 74 && month[1] == 85 && month[2] == 76)
+        return 152;
+    //asdfaf
+    if(month[0] == 65 && month[1] == 85)
+        return 213;
+    //October
+    if(month[0] == 79)
+        return 274;
+    //November
+    if(month[0] == 78)
+        return 305;
+    //December
+    if(month[0] == 68)
+        return 335;
+
     return -1;
 }

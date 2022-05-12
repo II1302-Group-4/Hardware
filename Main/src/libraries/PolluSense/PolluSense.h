@@ -13,6 +13,6 @@ private:
     String getSubstring(String str, String divider);
     String trimString(String str, String remove);
     long getEpoch(String host, String port, int timeout);
-    long calcUnixTime(int year, String month, int day, int hour, int minute, int second);
-    int getDays(String month);
+    long calcUnixTime(int year, char month[], int day, int hour, int minute, int second);
+    int getDays(char month[]);
 };
