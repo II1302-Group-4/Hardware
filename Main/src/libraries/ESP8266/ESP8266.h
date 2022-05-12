@@ -6,26 +6,23 @@
 class ESP8266
 {
 public:
-    ESP8266(int rx, int tx);
+    ESP8266(int rx, int tx, bool debug);
     void init();
-    void connectToAP(String ssid, String pwd);
-    void openTCP(String ip, String port);
+    bool connectToAP(String ssid, String pwd);
+    bool openTCP(String ip, String port);
     int closeTCP();
     int status();
-    void sendData(String data);
-    void postData(String unixTime, String voc, String co2);
-    long getEpoch(String host, String port);
+    void sendData(String len);
+    void pushData(String data);
+    String readData();
+    String readData(const int timeout);
 private:
     SoftwareSerial* espSerial = NULL;
+    bool DEBUG;
     void flushESP();
     String sendCmd(String cmd);
     String readResponse();
     String readResponse(const int timeout);
-    String readResponseDaytime(const int timeout);
-    String getSubstring(String str, String divider);
-    String trimString(String str, String remove);
-    long getEpoch(String host, String port, int timeout);
-    long calcUnixTime(int year, String month, int day, int hour, int minute, int second);
-    int getDays(String month);
+    String readResponseChar(const int timeout);
 };
 

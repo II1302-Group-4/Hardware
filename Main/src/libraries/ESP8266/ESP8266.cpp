@@ -1,9 +1,8 @@
 #include "ESP8266.h"
 
-const String HTTP_POST_HEADER = "POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: ";
-
-ESP8266::ESP8266(int rx, int tx) {
+ESP8266::ESP8266(int rx, int tx, bool debug) {
     espSerial = new SoftwareSerial(rx, tx);
+    DEBUG = debug;
 }
 
 /*--------------------Public--------------------*/
@@ -12,22 +11,30 @@ void ESP8266::init() {
     espSerial->begin(9600);
     sendCmd("AT");
     sendCmd("AT+CWMODE=1");
+    sendCmd("AT+CIPMUX=0");
     flushESP();
     Serial.println("Initialization successful");
 }
 
-void ESP8266::connectToAP(String ssid, String pwd) {
-    sendCmd("AT+CWJAP=\"" + ssid + "\",\"" + pwd + "\"");
+bool ESP8266::connectToAP(String ssid, String pwd) {
+    String response = sendCmd("AT+CWJAP=\"" + ssid + "\",\"" + pwd + "\"");
+    if (response.endsWith("\r\nOK\r\n"))
+        return true;
+    else
+        return false;
     flushESP();
 }
 
-void ESP8266::openTCP(String ip, String port) {
-    sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
+bool ESP8266::openTCP(String ip, String port) {
+    String response = sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
+    if (response.endsWith("\r\nOK\r\n"))
+        return true;
+    else
+        return false;
     flushESP();
 }
 
-int ESP8266::closeTCP()
-{
+int ESP8266::closeTCP() {
     sendCmd("AT+CIPCLOSE");
     if(status() != 4)
         return 1;
@@ -40,38 +47,61 @@ int ESP8266::status() {
     return response.substring(start, start + 1).toInt();
 }
 
-void ESP8266::sendData(String data) {
-    String len = "";
-    len += data.length();
+void ESP8266::sendData(String len) {
     sendCmd("AT+CIPSEND=" + len);
     delay(500);
-    espSerial->print(data);
-    readResponse();
-}
-//
-void ESP8266::postData(String time, String voc, String co2) {
-    String len = "";
-    String msgLen = "";
-    int extraCharacters = 7; // '\r\n\r\n' and the length of the 'len', which is always 7 characters in this case.
-
-    String data = "{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}";
-    msgLen += data.length() + HTTP_POST_HEADER.length() + extraCharacters; 
-    len += data.length();
-    sendCmd("AT+CIPSEND=" + msgLen);
-    delay(500);
-    espSerial->print(HTTP_POST_HEADER);
-    espSerial->print(len);
-    espSerial->print("\r\n\r\n");
-    espSerial->print(data);
-    readResponse();
 }
 
-/*
- * This function returns the approximate UNIX time, note that 
- * disregards leap seconds.
- */
-long ESP8266::getEpoch(String host, String port){
-    return getEpoch(host, port, 5000);
+void ESP8266::pushData(String data) {
+    if (DEBUG)
+        Serial.print(data);
+    espSerial->print(data);
+}
+
+String ESP8266::readData() {
+    return readData(15000);
+}
+
+String ESP8266::readData(const int timeout) {
+    String data = "";
+    char c;
+    long int time = millis();
+    while ((time+timeout) > millis()) {
+        while (espSerial->available()) {
+            c = espSerial->read();
+            data += c;
+            if (DEBUG)
+                Serial.print(c);
+            if (data.endsWith("+IPD,")) {
+                String slen = "";
+                delay(100);
+                while (espSerial->available()) {
+                    c = espSerial->read();
+                    if (DEBUG)
+                        Serial.print(c);
+                    if (c == ':')
+                        break;
+                    slen += c;
+                }
+                data = "";
+                int len = slen.toInt();
+                char c;
+                for (int i = 0; i < len; i++) {
+                    delay(1);
+                    if (!espSerial->available())
+                        return data;
+                    c = espSerial->read();
+                    data += c;
+                    if (DEBUG)
+                        Serial.print(c);
+                }
+                return data;
+            }
+        }
+    }
+    if (DEBUG)
+        Serial.print("Timed out\n");
+    return "";
 }
 
 /*--------------------Private--------------------*/
@@ -84,157 +114,32 @@ void ESP8266::flushESP() {
 
 String ESP8266::sendCmd(String cmd) {
     espSerial->println(cmd);
-    return readResponse();
+    String response = readResponse();
+    if (DEBUG)
+        Serial.println("----------");
+    return response;
 }
 
 String ESP8266::readResponse() {
-    return readResponse(30000);
+    return readResponse(15000);
 }
 
 String ESP8266::readResponse(const int timeout) {
-    String response = "";
+    String msg = "";
+    char c;
     long int time = millis();
     while ((time+timeout) > millis()) {
         while (espSerial->available()) {
-            char c = espSerial->read();
-            response += c;
-            Serial.print(c);
-            if (response.substring(response.length() - 6).equals("\r\nOK\r\n") ||
-                response.substring(response.length() - 9).equals("\r\nERROR\r\n"))
-                return response;
-            else if (response.substring(response.length() - 5).equals("+IPD,")) {
-                delay(1000);
-                flushESP();
-                return response;
+            c = espSerial->read();
+            msg += c;
+            if (DEBUG)
+                Serial.print(c);
+            if (msg.endsWith("\r\nOK\r\n") || msg.endsWith("\r\nERROR\r\n")) {
+                return msg;
             }
         }
     }
-    return "Timed out\n";
-}
-
-String ESP8266::readResponseDaytime(const int timeout){
-    String response = "";
-    long int time = millis();
-    while ((time+timeout) > millis())
-    {
-        while(espSerial->available())
-        {
-            char c = espSerial->read();
-            response += c;
-            Serial.print(c);
-            if(response.endsWith("CLOSED"))
-                return response;
-        }
-    }
+    if (DEBUG)
+        Serial.print("Timed out\n");
     return "";
-}
-
-String ESP8266::getSubstring(String str, String divider){
-    int pos = str.indexOf(divider);
-    return str.substring(0,pos);
-}
-
-String ESP8266::trimString(String str, String remove){
-    int len = remove.length();
-    return str.substring(len + 1);
-}
-
-long ESP8266::getEpoch(String host, String port, int timeout){
-    int time = millis();
-    bool connected = false;
-    int position;
-    String response;
-
-    // If the ESP8266 can't connected to the daytime-server within
-    // the timeout, the setup fails.
-    espSerial->println("AT+CIPSTART=\"TCP\",\"" + host + "\"," + port);
-    response = readResponseDaytime(timeout);
-    if(response == "")
-        return 0;
-
-    position = response.lastIndexOf("+IPD");
-    response = response.substring(position + 8);
-
-    String day = getSubstring(response, " ");
-    String month = getSubstring(response = trimString(response, day), " ");
-    String year = getSubstring(response = trimString(response, month), " ");
-    String hour = getSubstring(response = trimString(response, year), ":");
-    String minute = getSubstring(response = trimString(response, hour), ":");
-    String second = getSubstring(trimString(response, minute), " ");
-
-    return calcUnixTime(year.toInt(), month, day.toInt(), hour.toInt(), minute.toInt(), second.toInt());
-}
-
-long ESP8266::calcUnixTime(int year, String month, int day, int hour, int minute, int second){
-    long unixTime = 0;
-
-    if(year < 1970)
-        return 0;
-    if(day <= 0 || day > 31)
-        return 0;
-    if(hour < 0 || hour > 23)
-        return 0;
-    if(minute < 0 || minute > 59)
-        return 0;
-    if(second < 0 || second > 59)
-        return 0;
-
-    month.toUpperCase();
-    int days_in_year = getDays(month);
-    if(days_in_year < 0 || days_in_year > 365)
-        return 0;
-
-    days_in_year += day;
-    unixTime = (year - 1970) * 31556926;
-    unixTime += days_in_year * 86400;
-    unixTime += hour * 3600; 
-    unixTime += minute * 60;
-    unixTime += second;
-    
-    // Adds a constant amount of time to adjust for the year constant,
-    // which is not exact.116 minutes to be exact. 
-    // This was found through testing.
-    unixTime += (116 * 60);
-    return unixTime;
-}
-
-
-int ESP8266::getDays(String month){
-    int days = 0;
-    if(month.startsWith("JAN"))
-        return days;
-    days += 31;
-    if(month.startsWith("FEB"))
-        return days;
-    days += 28;
-    if(month.startsWith("MAR"))
-        return days;
-    days += 31;
-    if(month.startsWith("APR"))
-        return days;
-    days += 30;
-    if(month.startsWith("MAY"))
-        return days;
-    days += 31;
-    if(month.startsWith("JUN"))
-        return days;
-    days += 30;
-    if(month.startsWith("JUL"))
-        return days;
-    days += 31;
-    if(month.startsWith("AUG"))
-        return days;
-    days += 31;
-    if(month.startsWith("SEP"))
-        return days;
-    days += 30;
-    if(month.startsWith("OCT"))
-        return days;
-    days += 31;
-    if(month.startsWith("NOV"))
-        return days;
-    days += 30;
-    if(month.startsWith("DEC"))
-        return days;
-    return -1;
 }
