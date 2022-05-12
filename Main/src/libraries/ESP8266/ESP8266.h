@@ -3,31 +3,26 @@
 #include "Arduino.h"
 #include <SoftwareSerial.h>
 
-struct Response 
-{
-    String msg;
-    String data;
-};
-
 class ESP8266
 {
 public:
-    ESP8266(int rx, int tx);
+    ESP8266(int rx, int tx, bool debug);
     void init();
-    void connectToAP(String ssid, String pwd);
-    Response openTCP(String ip, String port);
+    bool connectToAP(String ssid, String pwd);
+    bool openTCP(String ip, String port);
     int closeTCP();
     int status();
-    void sendData(String data);
+    void sendData(String len);
+    void pushData(String data);
+    String readData();
+    String readData(const int timeout);
 private:
     SoftwareSerial* espSerial = NULL;
+    bool DEBUG;
     void flushESP();
-    Response sendCmd(String cmd);
-    Response sendCmd(String cmd, bool dataExpected);
+    String sendCmd(String cmd);
     String readResponse();
     String readResponse(const int timeout);
     String readResponseChar(const int timeout);
-    String readData();
-    String readData(const int timeout);
 };
 

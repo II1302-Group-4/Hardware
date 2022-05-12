@@ -1,10 +1,12 @@
 #include "../ESP8266/ESP8266.h"
+#include "../CCS811/CCS811.h"
 
 class PolluSense 
 {
 public:
     ESP8266* wifiModule = NULL;
-    PolluSense(int rx, int tx);
+    CCS811* sensorModule = NULL;
+    PolluSense(int rx, int tx, bool debug);
     long getEpoch(String host, String port);
     void postData(String unixTime, String voc, String co2);
 private:

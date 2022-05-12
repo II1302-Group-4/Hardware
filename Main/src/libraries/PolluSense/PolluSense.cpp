@@ -1,18 +1,23 @@
 #include "PolluSense.h"
 
-PolluSense::PolluSense(int rx, int tx) {
+PolluSense::PolluSense(int rx, int tx, bool debug) {
     HTTP_POST_HEADER = "POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: ";
-    wifiModule = new ESP8266(rx, tx);
+    wifiModule = new ESP8266(rx, tx, debug);
+    sensorModule = new CCS811(A2, A3);
 }
 
 /*--------------------Public--------------------*/
 
 void PolluSense::postData(String time, String voc, String co2) {
-    String data = "{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}";
-    String len = "";
-    len += data.length();
+    String data = String("\r\n\r\n{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}");
+    String dataLen = String(data.length() - 4);
+    String len = String((HTTP_POST_HEADER.length() + dataLen.length() + data.length()));
 
-    wifiModule->sendData(HTTP_POST_HEADER + len + "\r\n\r\n" + data);
+    wifiModule->sendData(len);
+    wifiModule->pushData(HTTP_POST_HEADER);
+    wifiModule->pushData(dataLen);
+    wifiModule->pushData(data);
+    wifiModule->readData();
 }
 
 /*
@@ -25,19 +30,19 @@ long PolluSense::getEpoch(String host, String port) {
 
 /*--------------------Private--------------------*/
 
-String PolluSense::getSubstring(String str, String divider){
+String PolluSense::getSubstring(String str, String divider) {
     int pos = str.indexOf(divider);
     return str.substring(0,pos);
 }
 
-String PolluSense::trimString(String str, String remove){
+String PolluSense::trimString(String str, String remove) {
     int len = remove.length();
     return str.substring(len + 1);
 }
 
-long PolluSense::getEpoch(String host, String port, int timeout){
-    Response res = wifiModule->openTCP(host, port);
-    String response = res.data;
+long PolluSense::getEpoch(String host, String port, int timeout) {
+    wifiModule->openTCP(host, port);
+    String response = wifiModule->readData();
 
     // If the ESP8266 can't connected to the daytime-server within
     // the timeout, the setup fails.
@@ -57,7 +62,7 @@ long PolluSense::getEpoch(String host, String port, int timeout){
     return calcUnixTime(year.toInt(), monthArray, day.toInt(), hour.toInt(), minute.toInt(), second.toInt());
 }
 
-long PolluSense::calcUnixTime(int year, char month[], int day, int hour, int minute, int second){
+long PolluSense::calcUnixTime(int year, char month[], int day, int hour, int minute, int second) {
     long unixTime = 0;
 
     if(year < 1970)

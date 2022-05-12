@@ -1,5 +1,4 @@
 #include "src/libraries/PolluSense/PolluSense.h"
-#include "src/libraries/CCS811/CCS811.h"
 
 const String WIFI_OHLSON = "Android Jakob";
 const String PWD_OHLSON = "leonboi11";
@@ -13,8 +12,7 @@ long unixTime = 0;
 const int GREEN_LED = 8;
 const int RED_LED = 9;
 
-PolluSense pollu(2, 3);
-CCS811 ccs(A2, A3);
+PolluSense pollu(2, 3, true);
 
 void greenHighRedLow() {
   digitalWrite(GREEN_LED, HIGH);
@@ -29,29 +27,27 @@ void setup() {
     pinMode(GREEN_LED, OUTPUT);
     pinMode(RED_LED, OUTPUT);
     digitalWrite(GREEN_LED, LOW);
-    digitalWrite(RED_LED, LOW);
+    digitalWrite(RED_LED, HIGH);
     Serial.begin(9600);
     Serial.println("\n------------------------");
 
     // Initialize sensor
-    ccs.init();
-    ccs.setReadInterval(ccs.INTERVAL_1SEC);
-
+    pollu.sensorModule->init();
+    pollu.sensorModule->setReadInterval(pollu.sensorModule->INTERVAL_1SEC);
+    
     // Initialize wifi communication
     pollu.wifiModule->init();
-    pollu.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
 
-    // Get and calculate date
-    unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+    unixTime = 0;
+    while (unixTime == 0) {
+        if (!pollu.wifiModule->connectToAP(WIFI_OHLSON, PWD_OHLSON))
+            continue;
+
+        // Get and calculate date
+        unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+    }
     Serial.print("\nTime: ");
     Serial.println(unixTime);
-    if(unixTime == 0)
-    {
-        Serial.println("\n---SETUP FAILED---");
-        delay(1000);
-        exit(1);
-        greenLowRedHigh();
-    }
     Serial.println("\n---Setup completed---");
     greenHighRedLow();
     
@@ -60,28 +56,26 @@ void setup() {
 void loop() {
     // Get sensor values and increment timer
     unixTime += millis() / 1000; 
-    ccs.fetchData();
-    String voc = String(ccs.getVOC());
-    String co2 = String(ccs.getCO2());
-
+    pollu.sensorModule->fetchData();
+    String voc = String(pollu.sensorModule->getVOC());
+    String co2 = String(pollu.sensorModule->getCO2());
 
     // Make a post to the database
     switch (pollu.wifiModule->status()) {
         default:
         case 1:
         case 5:
-            pollu.wifiModule->connectToAP(WIFI_OHLSON, PWD_OHLSON);
+            greenLowRedHigh();
+            if (!pollu.wifiModule->connectToAP(WIFI_OHLSON, PWD_OHLSON))
+                break;
+            greenHighRedLow();
         case 2:
         case 4:
-            pollu.wifiModule->openTCP(SERVER, SERVER_PORT);
+            if(!pollu.wifiModule->openTCP(SERVER, SERVER_PORT))
+                break;
         case 3:
             pollu.postData(String(unixTime), voc, co2);
     }
-
-    if (pollu.wifiModule->status() == 1 || pollu.wifiModule->status() == 5 || pollu.wifiModule->status() == 0)
-        greenLowRedHigh();
-    else
-        greenHighRedLow();
 
     //Wait <seconds> seconds
     int seconds = 10;
