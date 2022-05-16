@@ -62,7 +62,6 @@ void loop() {
 
     // Make a post to the database
     switch (pollu.wifiModule->status()) {
-        default:
         case 1:
         case 5:
             greenLowRedHigh();
@@ -77,12 +76,28 @@ void loop() {
             pollu.postData(String(unixTime), voc, co2);
     }
 
+    wait(60);
+}
+
+void wait(int seconds) {
     //Wait <seconds> seconds
-    int seconds = 10;
+    int statusCheck = 5;
     Serial.println();
-    for (int i = 0; i < seconds; i++) {
-        delay(1000);
-        Serial.print(".");
+    for (int i = 0; i < seconds / statusCheck; i++) {
+        for (int j = 0; j < statusCheck; j++) {
+            delay(1000);
+            Serial.print(".");
+        }
+        Serial.println();
+        switch (pollu.wifiModule->status()) {
+            case 1:
+            case 5:
+                greenLowRedHigh();
+                continue;
+            default:
+                greenHighRedLow();
+                continue;
+        }
     }
     Serial.println();
 }
