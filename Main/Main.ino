@@ -1,9 +1,5 @@
 #include "src/libraries/PolluSense/PolluSense.h"
 
-const String WIFI_OHLSON = "Android Jakob";
-const String PWD_OHLSON = "leonboi11";
-const String WIFI_GOTBERG = "wifi_adefcade";
-const String PWD_GOTBERG = "therobotsaretakingourjobs";
 const String SERVER = "pollusenseserver.azurewebsites.net";
 const String SERVER_PORT = "80";
 const String DAYTIME_SERVER = "java.lab.ssvl.kth.se";
@@ -12,16 +8,7 @@ long unixTime = 0;
 const int GREEN_LED = 8;
 const int RED_LED = 9;
 
-PolluSense pollu(2 , 3, true);
-
-void greenHighRedLow() {
-  digitalWrite(GREEN_LED, HIGH);
-  digitalWrite(RED_LED, LOW);
-}
-void greenLowRedHigh() {
-  digitalWrite(GREEN_LED, LOW);
-  digitalWrite(RED_LED, HIGH);
-}
+PolluSense pollu(2, 3, true);
 
 void setup() {
     pinMode(GREEN_LED, OUTPUT);
@@ -37,17 +24,12 @@ void setup() {
     
     // Initialize wifi communication
     pollu.wifiModule->init();
-    pollu.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
-
     unixTime = 0;
     while (unixTime == 0) {
-        if (!pollu.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG))
-        {
-            delay(1000);
+        if (!pollu.wifiModule->connectToAP(pollu.wifiModule->ssid, pollu.wifiModule->pwd))
             continue;
         }
         // Get and calculate date
-            delay(1000);
         unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
     }
     Serial.print("\nTime: ");
@@ -69,7 +51,7 @@ void loop() {
         case 1:
         case 5:
             greenLowRedHigh();
-            if (!pollu.wifiModule->connectToAP(WIFI_OHLSON, PWD_OHLSON))
+            if (!pollu.wifiModule->connectToAP(pollu.wifiModule->ssid, pollu.wifiModule->pwd))
                 break;
             greenHighRedLow();
         case 2:
@@ -81,6 +63,16 @@ void loop() {
     }
 
     wait(60);
+}
+
+void greenHighRedLow() {
+  digitalWrite(GREEN_LED, HIGH);
+  digitalWrite(RED_LED, LOW);
+}
+
+void greenLowRedHigh() {
+  digitalWrite(GREEN_LED, LOW);
+  digitalWrite(RED_LED, HIGH);
 }
 
 void wait(int seconds) {

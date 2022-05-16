@@ -6,6 +6,8 @@
 class ESP8266
 {
 public:
+    String ssid;
+    String pwd;
     ESP8266(int rx, int tx, bool debug);
     void init();
     bool connectToAP(String ssid, String pwd);
