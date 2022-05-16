@@ -11,9 +11,10 @@ void ESP8266::init() {
     espSerial->begin(9600);
     sendCmd("AT");
     sendCmd("AT+CWMODE=1");
+    sendCmd("AT+CIPSERVER=0");
     sendCmd("AT+CIPMUX=0");
     flushESP();
-    Serial.println("Initialization successful");
+ //   Serial.println("Initialization successful");
 }
 
 bool ESP8266::connectToAP(String ssid, String pwd) {
@@ -27,6 +28,7 @@ bool ESP8266::connectToAP(String ssid, String pwd) {
 
 bool ESP8266::openTCP(String ip, String port) {
     String response = sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
+
     if (response.endsWith("\r\nOK\r\n"))
         return true;
     else

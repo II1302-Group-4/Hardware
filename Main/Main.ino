@@ -12,7 +12,7 @@ long unixTime = 0;
 const int GREEN_LED = 8;
 const int RED_LED = 9;
 
-PolluSense pollu(2, 3, true);
+PolluSense pollu(2 , 3, true);
 
 void greenHighRedLow() {
   digitalWrite(GREEN_LED, HIGH);
@@ -37,13 +37,17 @@ void setup() {
     
     // Initialize wifi communication
     pollu.wifiModule->init();
+    pollu.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
 
     unixTime = 0;
     while (unixTime == 0) {
-        if (!pollu.wifiModule->connectToAP(WIFI_OHLSON, PWD_OHLSON))
+        if (!pollu.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG))
+        {
+            delay(1000);
             continue;
-
+        }
         // Get and calculate date
+            delay(1000);
         unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
     }
     Serial.print("\nTime: ");

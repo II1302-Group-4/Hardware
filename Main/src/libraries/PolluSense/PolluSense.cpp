@@ -8,7 +8,7 @@ PolluSense::PolluSense(int rx, int tx, bool debug) {
 
 /*--------------------Public--------------------*/
 
-void PolluSense::postData(String time, String voc, String co2) {
+bool PolluSense::postData(String time, String voc, String co2) {
     String data = String("\r\n\r\n{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}");
     String dataLen = String(data.length() - 4);
     String len = String((HTTP_POST_HEADER.length() + dataLen.length() + data.length()));
@@ -17,7 +17,16 @@ void PolluSense::postData(String time, String voc, String co2) {
     wifiModule->pushData(HTTP_POST_HEADER);
     wifiModule->pushData(dataLen);
     wifiModule->pushData(data);
-    wifiModule->readData();
+    String response = wifiModule->readData();
+
+    char buffer[13];
+    response.toCharArray(buffer, 13);
+
+    if(validateResponse(buffer))
+    {
+        return true;
+    }
+    return false;
 }
 
 /*
@@ -39,6 +48,7 @@ String PolluSense::trimString(String str, String remove) {
     int len = remove.length();
     return str.substring(len + 1);
 }
+
 
 long PolluSense::getEpoch(String host, String port, int timeout) {
     wifiModule->openTCP(host, port);
@@ -64,6 +74,7 @@ long PolluSense::getEpoch(String host, String port, int timeout) {
 
 long PolluSense::calcUnixTime(int year, char month[], int day, int hour, int minute, int second) {
     long unixTime = 0;
+    int days_since_epoch = 0;
 
     if(year < 1970)
         return 0;
@@ -76,26 +87,38 @@ long PolluSense::calcUnixTime(int year, char month[], int day, int hour, int min
     if(second < 0 || second > 59)
         return 0;
 
-
     int days_in_year = getDays(month);
     if(days_in_year < 0 || days_in_year > 365)
         return 0;
 
-    days_in_year += day;
-    unixTime = (year - 1970) * 31556926;
-    unixTime += days_in_year * 86400;
-    unixTime += hour * 3600; 
+    days_since_epoch = (year - 1970) * 365;
+    days_since_epoch += getLeapDays(year, days_in_year);
+    days_since_epoch += getDays(month);
+    days_since_epoch += day - 3;
+
+    long hh = 0;
+    for(int i = 0; i < hour; i++)
+        hh += 3600;
+
+    unixTime += days_since_epoch * 86400;
+    unixTime += hh;
     unixTime += minute * 60;
     unixTime += second;
     
-    // Adds a constant amount of time to adjust for the year constant,
-    // which is not exact.116 minutes to be exact. 
-    // This was found through testing.
-    unixTime += (116 * 60);
+    // Remove two hours to account for timezone difference.
+    unixTime -= 7200;
     return unixTime;
 }
 
+int PolluSense::getLeapDays(int year, int days){
+    if(days > 59)
+        year++;
 
+    int leapdays = 0;
+    for(int i = 1970; i < year; i += 4)
+        leapdays++;
+    return leapdays;
+}
 int PolluSense::getDays(char month[]) {
 
     //January 
@@ -130,4 +153,17 @@ int PolluSense::getDays(char month[]) {
         return 335;
 
     return -1;
+}
+
+bool PolluSense::validateResponse(char buffer[]){
+
+    if(buffer[9] == 50 && buffer[10] == 48 && buffer[11] == 49)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+
 }
