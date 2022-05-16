@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../ESP8266/ESP8266.h"
 #include "../CCS811/CCS811.h"
 

@@ -9,6 +9,45 @@ ESP8266::ESP8266(int rx, int tx, bool debug) {
 
 void ESP8266::init() {
     espSerial->begin(9600);
+
+    sendCmd("AT+CWMODE=3");
+    sendCmd("AT+CIPMUX=1");
+    sendCmd("AT+CIPSERVER=1,5000");
+    sendCmd("AT+CIFSR");
+    sendCmd("AT+CWMODE?");
+
+    String msg = "";
+    char c;
+    // Ignore connect message
+    while (!espSerial->available());
+    while (espSerial->available()) {
+        delay(10);
+        espSerial->read();
+    }
+    if (DEBUG)
+        Serial.println("Client connected!");
+    // Read the actual message
+    while (!espSerial->available());
+    while (espSerial->available()) {
+        delay(10);
+        c = espSerial->read();
+        msg += c;
+    }
+
+    if (DEBUG)
+        Serial.println("Message from client:" + msg);
+    // Break out parts of msg
+    int ipdPos = msg.indexOf(':');
+    msg = msg.substring(ipdPos + 1);
+    int delimPos = msg.indexOf(',');
+    ssid = msg.substring(0, delimPos);
+    pwd = msg.substring(delimPos + 1);
+    ssid.trim();
+    pwd.trim();
+    if (DEBUG)
+        Serial.println("msg: " + ssid + pwd);
+    sendCmd("AT+CIPSERVER=0");
+
     sendCmd("AT");
     sendCmd("AT+CWMODE=1");
     sendCmd("AT+CIPMUX=0");
@@ -65,7 +104,7 @@ String ESP8266::readData() {
 String ESP8266::readData(const int timeout) {
     String data = "";
     char c;
-    long int time = millis();
+    int time = millis();
     while ((time+timeout) > millis()) {
         while (espSerial->available()) {
             c = espSerial->read();
@@ -85,7 +124,6 @@ String ESP8266::readData(const int timeout) {
                 }
                 data = "";
                 int len = slen.toInt();
-                char c;
                 for (int i = 0; i < len; i++) {
                     delay(1);
                     if (!espSerial->available())
