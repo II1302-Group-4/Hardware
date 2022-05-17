@@ -7,6 +7,19 @@ ESP8266::ESP8266(int rx, int tx, bool debug) {
 
 /*--------------------Public--------------------*/
 
+/*
+ * Initiates the ESP8266 without needing ssid and password for
+ * outside source. 
+ * Needs hard-coded ssid and password.
+ */
+void ESP8266::basicInit(){
+    espSerial->begin(9600);
+    sendCmd("AT");
+    sendCmd("AT+CWMODE=1");
+    sendCmd("AT+CIPMUX=0");
+    flushESP();
+}
+
 void ESP8266::init() {
     espSerial->begin(9600);
 

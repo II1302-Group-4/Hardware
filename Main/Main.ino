@@ -42,6 +42,7 @@ void loop() {
     String voc = String(pollu.sensorModule->getVOC());
     String co2 = String(pollu.sensorModule->getCO2());
 
+// Put switch-case into loop?
     // Make a post to the database
     switch (pollu.wifiModule->status()) {
         case 1:

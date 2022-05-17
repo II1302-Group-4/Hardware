@@ -9,6 +9,7 @@ public:
     String ssid;
     String pwd;
     ESP8266(int rx, int tx, bool debug);
+    void basicInit();
     void init();
     bool connectToAP(String ssid, String pwd);
     bool openTCP(String ip, String port);
