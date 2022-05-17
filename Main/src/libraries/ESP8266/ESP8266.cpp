@@ -14,9 +14,10 @@ ESP8266::ESP8266(int rx, int tx, bool debug) {
  */
 void ESP8266::basicInit(){
     espSerial->begin(9600);
-    sendCmd("AT");
-    sendCmd("AT+CWMODE=1");
-    sendCmd("AT+CIPMUX=0");
+    sendCharCmd("AT");
+    sendCharCmd("AT+CWMODE=1");
+    sendCharCmd("AT+CIPSERVER=0");
+    sendCharCmd("AT+CIPMUX=0");
     flushESP();
 }
 

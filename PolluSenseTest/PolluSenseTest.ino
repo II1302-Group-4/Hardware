@@ -8,6 +8,7 @@ const String SERVER_PORT = "80";
 const String DAYTIME_SERVER = "java.lab.ssvl.kth.se";
 const String DAYTIME_SERVER_PORT = "13";
 
+const char * ut = "==UNIXTIME==";
 const int currentUnixTime = 1652783452; //Needs to be updated before every test.
 
 test(getEpoch_validation)
@@ -16,7 +17,11 @@ test(getEpoch_validation)
     instance.wifiModule->basicInit();
     instance.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
 
-    int res = instance.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+    long res = 0;
+    res = instance.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+
+    Serial.println(ut);
+    Serial.println(res);
     assertMore(res, 0);
 }
 
@@ -27,21 +32,14 @@ test(getEpoch_validation_compareUnixTime)
     instance.wifiModule->basicInit();
     instance.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
 
-    int res = instance.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+    long res = instance.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+    Serial.println(ut);
+    Serial.println(res);
+    if(res == 0)
+        fail();
     assertRelativelyNear(currentUnixTime, res, maxerr);
 }
 
-test(getEpoch_wrongHostName)
-{
-    PolluSense instance(2, 3, true);
-    instance.wifiModule->basicInit();
-    instance.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
-
-    int res = instance.getEpoch(DAYTIME_SERVER + ".com", DAYTIME_SERVER_PORT);
-    assertEqual(res, 0);
-}
-
-/*
 test(getEpoch_wrongPort)
 {
     PolluSense instance(2, 3, true);
@@ -49,16 +47,6 @@ test(getEpoch_wrongPort)
     instance.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
 
     int res = instance.getEpoch(DAYTIME_SERVER, "7");
-    assertEqual(res, 0);
-}
-
-test(getEpoch_WiFiFail)
-{
-    PolluSense instance(2, 3, true);
-    instance.wifiModule->basicInit();
-    instance.wifiModule->connectToAP(WIFI_GOTBERG, "wrong_pass");
-
-    int res = instance.getEpoch(DAYTIME_SERVER, PWD_GOTBERG);
     assertEqual(res, 0);
 }
 
@@ -72,29 +60,6 @@ test(postData_validation)
     bool res = instance.postData("0" , "400", "400");
     assertEqual(res, true);
 }
-
-test(postData_wrongServer)
-{
-    PolluSense instance(2, 3, true);
-    instance.wifiModule->basicInit();
-    instance.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
-
-    instance.wifiModule->openTCP(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
-    bool res = instance.postData("0" , "400", "400");
-    assertEqual(res, false);
-}
-
-test(postData_wrongData)
-{
-    PolluSense instance(2, 3, true);
-    instance.wifiModule->basicInit();
-    instance.wifiModule->connectToAP(WIFI_GOTBERG, PWD_GOTBERG);
-
-    instance.wifiModule->openTCP(SERVER, SERVER_PORT);
-    bool res = instance.postData("0" , "399", "1188");
-    assertEqual(res, false);
-}
-*/
 void setup()
 {
   delay(2000);

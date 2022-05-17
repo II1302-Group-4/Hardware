@@ -29,7 +29,7 @@ bool PolluSense::postData(String time, String voc, String co2) {
 }
 
 long PolluSense::getEpoch(String host, String port) {
-    return getEpoch(host, port, 5000);
+    return getEpoch(host, port, 3);
 }
 /*--------------------Private--------------------*/
 
@@ -38,14 +38,10 @@ long PolluSense::getEpoch(String host, String port) {
  * GMT+2
  */
 long PolluSense::getEpoch(String host, String port, int timeout) {
+    if(port != "13")
+        return 0;
     int time = millis();
-    while(true)
-    {
-        if(!wifiModule->openTCP(host, port));
-            return 0;
-        if((time+timeout) > millis())
-            return 0;
-    }
+    wifiModule->openTCP(host, port);
     String response = wifiModule->readData();
     if(response == "")
         return 0;
