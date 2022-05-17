@@ -25,11 +25,11 @@ void setup() {
     // Initialize wifi communication
     pollu.wifiModule->init();
     unixTime = 0;
-    while (unixTime == 0) {
+    while (true) {
         if (!pollu.wifiModule->connectToAP(pollu.wifiModule->ssid, pollu.wifiModule->pwd))
             continue;
-        // Get and calculate date
-        unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+        else
+            break;
     }
     greenHighRedLow();
     
@@ -37,7 +37,15 @@ void setup() {
 
 void loop() {
     // Get sensor values and increment timer
-    unixTime += millis() / 1000; 
+    while(unixTime == 0)
+    {
+        pollu.wifiModule->closeTCP();
+        delay(1000);
+        unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+        delay(200);
+        Serial.println("=== unixtime ===");
+        Serial.println(unixTime);
+    }
     pollu.sensorModule->fetchData();
     String voc = String(pollu.sensorModule->getVOC());
     String co2 = String(pollu.sensorModule->getCO2());
@@ -59,7 +67,8 @@ void loop() {
             pollu.postData(String(unixTime), voc, co2);
     }
 
-    wait(60);
+    unixTime = 0;
+    wait(45);
 }
 
 void greenHighRedLow() {

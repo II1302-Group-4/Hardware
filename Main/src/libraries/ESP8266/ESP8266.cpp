@@ -201,7 +201,9 @@ String ESP8266::readResponse(const int timeout) {
             }
         }
     }
-    if (DEBUG)
+    if (DEBUG) {
         Serial.print("Timed out\n");
+        Serial.println(msg);
+    }
     return "";
 }
