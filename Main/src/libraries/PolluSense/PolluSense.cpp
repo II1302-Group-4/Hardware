@@ -1,7 +1,6 @@
 #include "PolluSense.h"
 
 PolluSense::PolluSense(int rx, int tx, bool debug) {
-    HTTP_POST_HEADER = "POST /data HTTP/1.1\r\nContent-Type: application/json\r\nAccept: */*\r\nHost: pollusenseserver.azurewebsites.net\r\nAccept-Encoding: gzip, deflate, br\r\nConnection: keep-alive\r\nContent-Length: ";
     wifiModule = new ESP8266(rx, tx, debug);
     sensorModule = new CCS811(A2, A3);
 }
@@ -29,35 +28,24 @@ bool PolluSense::postData(String time, String voc, String co2) {
     return false;
 }
 
-/*
- * This function returns the approximate UNIX time, note that 
- * disregards leap seconds.
- */
 long PolluSense::getEpoch(String host, String port) {
-    return getEpoch(host, port, 5000);
+    return getEpoch(host, port, 3);
 }
-
 /*--------------------Private--------------------*/
 
-String PolluSense::getSubstring(String str, String divider) {
-    int pos = str.indexOf(divider);
-    return str.substring(0,pos);
-}
-
-String PolluSense::trimString(String str, String remove) {
-    int len = remove.length();
-    return str.substring(len + 1);
-}
-
-
+/*
+ * This function returns the unix time, setup to work in
+ * GMT+2
+ */
 long PolluSense::getEpoch(String host, String port, int timeout) {
+    if(port != "13")
+        return 0;
+    int time = millis();
     wifiModule->openTCP(host, port);
     String response = wifiModule->readData();
-
-    // If the ESP8266 can't connected to the daytime-server within
-    // the timeout, the setup fails.
     if(response == "")
         return 0;
+
     String day = getSubstring(response, " ");
     String month = getSubstring(response = trimString(response, day), " ");
     String year = getSubstring(response = trimString(response, month), " ");
@@ -70,6 +58,17 @@ long PolluSense::getEpoch(String host, String port, int timeout) {
     month.toCharArray(monthArray, 4);
 
     return calcUnixTime(year.toInt(), monthArray, day.toInt(), hour.toInt(), minute.toInt(), second.toInt());
+}
+
+
+String PolluSense::getSubstring(String str, String divider) {
+    int pos = str.indexOf(divider);
+    return str.substring(0,pos);
+}
+
+String PolluSense::trimString(String str, String remove) {
+    int len = remove.length();
+    return str.substring(len + 1);
 }
 
 long PolluSense::calcUnixTime(int year, char month[], int day, int hour, int minute, int second) {
