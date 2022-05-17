@@ -1,17 +1,64 @@
 #include "src/libraries/ESP8266/ESP8266.h"
 #include "src/libraries/ArduinoUnit/src/ArduinoUnit.h"
 
-const String WIFI_OHLSON = "Android Jakob";
-const String PWD_OHLSON = "leonboi11";
-const String SERVER = "pollusenseserver.azurewebsites.net";
-const String SERVER_PORT = "80";
-const String DAYTIME_SERVER = "java.lab.ssvl.kth.se";
-const String DAYTIME_SERVER_PORT = "13";
+// When testing there must be an AP available with the 
+// parameters in below variables.
+const String WIFI = "Android Jakob";
+const String PWD = "leonboi11";
 
-test(openTCP)
+const String NOT_WIFI = "öaffoiauhpaömph";
+const String NOT_PWD = "alofppjk498";
+const String SERVER = "java.lab.ssvl.kth.se";
+const String NOT_SERVER = "asöldkfjöaskdjfj";
+
+test(connectToAP_successful)
 {
     ESP8266 esp(2, 3, false);
-    assertEqual(esp.)
+    esp.basicInit();
+    bool result = esp.connectToAP(WIFI, PWD);
+    assertEqual(result, true);
+}
+
+test (connectToAP_failed)
+{
+    ESP8266 esp(2, 3, false);
+    esp.basicInit();
+    bool result = esp.connectToAP(NOT_WIFI, NOT_PWD);
+    assertEqual(result, false);
+}
+
+test (connectToAP_wrong_password)
+{
+    ESP8266 esp(2, 3, false);
+    esp.basicInit();
+    bool result = esp.connectToAP(WIFI, NOT_PWD);
+    assertEqual(result, false);
+}
+
+test (connectToAP_empty_params)
+{
+    ESP8266 esp(2, 3, false);
+    esp.basicInit();
+    bool result = esp.connectToAP("", "");
+    assertEqual(result, false);
+}
+
+test (openTCP_valid_server)
+{
+    ESP8266 esp(2, 3, false);
+    esp.basicInit();
+    esp.connectToAP(WIFI, PWD);
+    bool result = esp.openTCP(SERVER, "13");
+    assertEqual(result, true);
+}
+
+test (openTCP_invalid_server)
+{
+    ESP8266 esp(2, 3, false);
+    esp.basicInit();
+    esp.connectToAP(WIFI, PWD);
+    bool result = esp.openTCP(NOT_SERVER, "13");
+    assertEqual(result, true);
 }
 
 void setup()
