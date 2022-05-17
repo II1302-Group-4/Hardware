@@ -31,9 +31,6 @@ void setup() {
         // Get and calculate date
         unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
     }
-    Serial.print("\nTime: ");
-    Serial.println(unixTime);
-    Serial.println("\n---Setup completed---");
     greenHighRedLow();
     
 }
