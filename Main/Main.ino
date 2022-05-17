@@ -28,7 +28,6 @@ void setup() {
     while (unixTime == 0) {
         if (!pollu.wifiModule->connectToAP(pollu.wifiModule->ssid, pollu.wifiModule->pwd))
             continue;
-        }
         // Get and calculate date
         unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
     }
