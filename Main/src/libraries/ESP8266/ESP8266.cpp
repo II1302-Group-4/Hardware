@@ -23,11 +23,15 @@ void ESP8266::basicInit(){
 void ESP8266::init() {
     espSerial->begin(9600);
 
-    sendCmd("AT+CWMODE=3");
-    sendCmd("AT+CIPMUX=1");
-    sendCmd("AT+CIPSERVER=1,5000");
-    sendCmd("AT+CIFSR");
-    sendCmd("AT+CWMODE?");
+    sendCharCmd("AT+CIPSERVER=0");
+    sendCharCmd("AT+CIPMUX=0");
+    sendCharCmd("AT+CIPMODE=0");
+
+    sendCharCmd("AT+CWMODE=3");
+    sendCharCmd("AT+CIPMUX=1");
+    sendCharCmd("AT+CIPSERVER=1,5000");
+    sendCharCmd("AT+CIFSR");
+    sendCharCmd("AT+CWMODE?");
 
     String msg = "";
     char c;
@@ -59,14 +63,13 @@ void ESP8266::init() {
     pwd.trim();
     if (DEBUG)
         Serial.println("msg: " + ssid + pwd);
-    sendCmd("AT+CIPSERVER=0");
+    sendCharCmd("AT+CIPSERVER=0");
 
-    sendCmd("AT");
-    sendCmd("AT+CWMODE=1");
-    sendCmd("AT+CIPSERVER=0");
-    sendCmd("AT+CIPMUX=0");
+    sendCharCmd("AT");
+    sendCharCmd("AT+CWMODE=1");
+    sendCharCmd("AT+CIPSERVER=0");
+    sendCharCmd("AT+CIPMUX=0");
     flushESP();
- //   Serial.println("Initialization successful");
 }
 
 bool ESP8266::connectToAP(String ssid, String pwd) {
@@ -89,7 +92,7 @@ bool ESP8266::openTCP(String ip, String port) {
 }
 
 int ESP8266::closeTCP() {
-    sendCmd("AT+CIPCLOSE");
+    sendCharCmd("AT+CIPCLOSE");
     if(status() != 4)
         return 1;
     return 0;
@@ -171,6 +174,11 @@ String ESP8266::sendCmd(String cmd) {
     if (DEBUG)
         Serial.println("----------");
     return response;
+}
+
+void ESP8266::sendCharCmd(const char *c) {
+    espSerial->println(c);
+    readResponse();
 }
 
 String ESP8266::readResponse() {

@@ -24,6 +24,7 @@ private:
     bool DEBUG;
     void flushESP();
     String sendCmd(String cmd);
+    void sendCharCmd(const char *c);
     String readResponse();
     String readResponse(const int timeout);
     String readResponseChar(const int timeout);
