@@ -7,6 +7,7 @@ const String DAYTIME_SERVER_PORT = "13";
 long unixTime = 0;
 const int GREEN_LED = 8;
 const int RED_LED = 9;
+const int loopDelay = 900;
 
 PolluSense pollu(2, 3, true);
 
@@ -49,6 +50,7 @@ void loop() {
     pollu.sensorModule->fetchData();
     String voc = String(pollu.sensorModule->getVOC());
     String co2 = String(pollu.sensorModule->getCO2());
+    unixTime += loopDelay;
 
 // Put switch-case into loop?
     // Make a post to the database
