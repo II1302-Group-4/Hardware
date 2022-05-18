@@ -27,10 +27,11 @@ void setup() {
     pollu.wifiModule->init();
     unixTime = 0;
     while (unixTime == 0) {
-        if (!pollu.wifiModule->connectToAP(pollu.wifiModule->ssid, pollu.wifiModule->pwd))
+        if (!pollu.wifiModule->connectToAP())
             continue;
         // Get and calculate date
         unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
+        Serial.println("Epoch failed");
     }
     greenHighRedLow();
     
@@ -49,7 +50,7 @@ void loop() {
         case 1:
         case 5:
             greenLowRedHigh();
-            if (!pollu.wifiModule->connectToAP(pollu.wifiModule->ssid, pollu.wifiModule->pwd))
+            if (!pollu.wifiModule->connectToAP())
                 break;
             greenHighRedLow();
         case 2:

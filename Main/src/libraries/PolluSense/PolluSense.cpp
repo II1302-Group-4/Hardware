@@ -10,13 +10,8 @@ PolluSense::PolluSense(int rx, int tx, bool debug) {
 bool PolluSense::postData(String time, String voc, String co2) {
     String data = String("\r\n\r\n{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}");
     String dataLen = String(data.length() - 4);
-    String len = String((HTTP_POST_HEADER.length() + dataLen.length() + data.length()));
 
-    wifiModule->sendData(len);
-    wifiModule->pushData(HTTP_POST_HEADER);
-    wifiModule->pushData(dataLen);
-    wifiModule->pushData(data);
-    String response = wifiModule->readData();
+    String response = wifiModule->sendData(HTTP_POST_HEADER + dataLen + data);
 
     char buffer[13];
     response.toCharArray(buffer, 13);
