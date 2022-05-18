@@ -15,12 +15,7 @@ bool PolluSense::postData(String time, String voc, String co2) {
 
     char buffer[13];
     response.toCharArray(buffer, 13);
-
-    if(validateResponse(buffer))
-    {
-        return true;
-    }
-    return false;
+    return validateResponse(buffer);
 }
 
 long PolluSense::getEpoch(String host, String port) {
@@ -32,45 +27,75 @@ long PolluSense::getEpoch(String host, String port) {
  * This function returns the unix time, setup to work in
  * GMT+2
  */
+
+int PolluSense::getIndex(char buffer[], int pos, char divider){
+    int i = pos;
+    while(buffer[i] != divider)
+        i++;
+    i++;
+    return i;
+}
+
+int PolluSense::bufferToInt(char buffer[], int start, int end){
+    int len = end - start;
+    int multiplier = 10;
+    if(len > 3)
+        multiplier = 1000;
+    int res = 0;
+    for(int i = start; i < end; i++)
+    {
+        res += (int) (buffer[i] - 48) * multiplier;
+        multiplier = multiplier / 10;
+    }
+    return res;
+}
+void PolluSense::fillCharArray(char buffer[], char * res, int start, int end){
+    res[0] = buffer[start];
+    res[1] = buffer[start+1];
+    res[2] = buffer[start+2];
+}
+
 long PolluSense::getEpoch(String host, String port, int timeout) {
-    if(port != "13")
-        return 0;
-    int time = millis();
+    if(port == "13");
+    int indexA = 0;
+    int indexB = 0;
     wifiModule->openTCP(host, port);
     String response = wifiModule->readData();
-    if(response == "")
+    Serial.println("== getEpoch ==");
+    Serial.println(response);
+    int length = response.length();
+    if(length == 0)
         return 0;
+    char buffer[length];
+    response.toCharArray(buffer, length);
 
-    String day = getSubstring(response, " ");
-    String month = getSubstring(response = trimString(response, day), " ");
-    String year = getSubstring(response = trimString(response, month), " ");
-    String hour = getSubstring(response = trimString(response, year), ":");
-    String minute = getSubstring(response = trimString(response, hour), ":");
-    String second = getSubstring(trimString(response, minute), " ");
+    indexA = getIndex(buffer, 0, ' ');
+    int day = bufferToInt(buffer, 0, indexA);
 
-    char monthArray[4];
-    month.toUpperCase();
-    month.toCharArray(monthArray, 4);
+    indexB = getIndex(buffer, indexA, ' ');
+    char month[3];
+    fillCharArray(buffer, month, indexA, indexB);
+    
+    indexA = getIndex(buffer, indexB, ' ');
+    int year = bufferToInt(buffer, indexB, indexA);
 
-    return calcUnixTime(year.toInt(), monthArray, day.toInt(), hour.toInt(), minute.toInt(), second.toInt());
+    indexB = getIndex(buffer, indexA, ':');
+    int hour = bufferToInt(buffer, indexA, indexB -1);
+
+    indexA = getIndex(buffer, indexB, ':');
+    int minute = bufferToInt(buffer, indexB, indexA -1);
+
+    indexB = getIndex(buffer, indexB, ' ');
+    int second = bufferToInt(buffer, indexA, indexB);
+
+    return calcUnixTime(year, month, day, hour, minute, second);
 }
-
-
-String PolluSense::getSubstring(String str, String divider) {
-    int pos = str.indexOf(divider);
-    return str.substring(0,pos);
-}
-
-String PolluSense::trimString(String str, String remove) {
-    int len = remove.length();
-    return str.substring(len + 1);
-}
-
 long PolluSense::calcUnixTime(int year, char month[], int day, int hour, int minute, int second) {
     long unixTime = 0;
     int days_since_epoch = 0;
 
-    if(year < 1970)
+
+   if(year < 1970)
         return 0;
     if(day <= 0 || day > 31)
         return 0;
@@ -150,14 +175,8 @@ int PolluSense::getDays(char month[]) {
 }
 
 bool PolluSense::validateResponse(char buffer[]){
-
     if(buffer[9] == 50 && buffer[10] == 48 && buffer[11] == 49)
-    {
         return true;
-    }
     else
-    {
         return false;
-    }
-
 }
