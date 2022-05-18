@@ -8,7 +8,7 @@ class PolluSense
 public:
     ESP8266* wifiModule = NULL;
     CCS811* sensorModule = NULL;
-    PolluSense(int rx, int tx, bool debug);
+    PolluSense(int rx, int tx);
     long getEpoch(String host, String port);
     bool postData(String unixTime, String voc, String co2);
 private:

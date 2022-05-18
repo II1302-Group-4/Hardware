@@ -1,7 +1,7 @@
 #include "PolluSense.h"
 
-PolluSense::PolluSense(int rx, int tx, bool debug) {
-    wifiModule = new ESP8266(rx, tx, debug);
+PolluSense::PolluSense(int rx, int tx) {
+    wifiModule = new ESP8266(rx, tx);
     sensorModule = new CCS811(A2, A3);
 }
 
@@ -16,7 +16,7 @@ bool PolluSense::postData(String time, String voc, String co2) {
     String dataLen = String(data.length() - 4);
     String len = String((HTTP_POST_HEADER.length() + dataLen.length() + data.length()));
 
-    wifiModule->sendData(len);
+    wifiModule->openSendStream(len);
     wifiModule->pushData(HTTP_POST_HEADER);
     wifiModule->pushData(dataLen);
     wifiModule->pushData(data);

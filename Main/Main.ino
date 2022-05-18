@@ -10,7 +10,7 @@ const int GREEN_LED = 8;
 const int RED_LED = 9;
 const int loopDelay = 10;
 
-PolluSense pollu(2, 3, true);
+PolluSense pollu(2, 3);
 
 void setup() {
     pinMode(GREEN_LED, OUTPUT);

@@ -1,8 +1,7 @@
 #include "ESP8266.h"
 
-ESP8266::ESP8266(int rx, int tx, bool debug) {
+ESP8266::ESP8266(int rx, int tx) {
     espSerial = new SoftwareSerial(rx, tx);
-    DEBUG = debug;
 }
 
 /*--------------------Public--------------------*/
@@ -12,7 +11,7 @@ ESP8266::ESP8266(int rx, int tx, bool debug) {
  * outside source. 
  * Needs hard-coded ssid and password.
  */
-void ESP8266::basicInit(){
+void ESP8266::basicInit() {
     espSerial->begin(9600);
     sendCharCmd("AT");
     sendCharCmd("AT+CWMODE=1");
@@ -23,37 +22,16 @@ void ESP8266::basicInit(){
 
 void ESP8266::init() {
     espSerial->begin(9600);
-
     sendCharCmd("AT+CIPSERVER=0");
     sendCharCmd("AT+CIPMUX=0");
     sendCharCmd("AT+CIPMODE=0");
-
     sendCharCmd("AT+CWMODE=3");
     sendCharCmd("AT+CIPMUX=1");
     sendCharCmd("AT+CIPSERVER=1,5000");
     sendCharCmd("AT+CIFSR");
     sendCharCmd("AT+CWMODE?");
-
-    String msg = "";
-    char c;
-    // Ignore connect message
-    while (!espSerial->available());
-    while (espSerial->available()) {
-        delay(10);
-        espSerial->read();
-    }
-    if (DEBUG)
-        Serial.println("Client connected!");
-    // Read the actual message
-    while (!espSerial->available());
-    while (espSerial->available()) {
-        delay(10);
-        c = espSerial->read();
-        msg += c;
-    }
-
-    if (DEBUG)
-        Serial.println("Message from client:" + msg);
+    String msg = readData(900000);
+    Serial.println("Message from client:" + msg);
     // Break out parts of msg
     int ipdPos = msg.indexOf(':');
     msg = msg.substring(ipdPos + 1);
@@ -62,10 +40,8 @@ void ESP8266::init() {
     pwd = msg.substring(delimPos + 1);
     ssid.trim();
     pwd.trim();
-    if (DEBUG)
-        Serial.println("msg: " + ssid + pwd);
+    Serial.println("msg: " + ssid + pwd);
     sendCharCmd("AT+CIPSERVER=0");
-
     sendCharCmd("AT");
     sendCharCmd("AT+CWMODE=1");
     sendCharCmd("AT+CIPSERVER=0");
@@ -104,14 +80,13 @@ int ESP8266::status() {
     return response.substring(start, start + 1).toInt();
 }
 
-void ESP8266::sendData(String len) {
+void ESP8266::openSendStream(String len) {
     sendCmd("AT+CIPSEND=" + len);
     delay(500);
 }
 
 void ESP8266::pushData(String data) {
-    if (DEBUG)
-        Serial.print(data);
+    Serial.print(data);
     espSerial->print(data);
 }
 
@@ -127,18 +102,18 @@ String ESP8266::readData(const int timeout) {
         while (espSerial->available()) {
             c = espSerial->read();
             data += c;
-            if (DEBUG)
-                Serial.print(c);
+            Serial.print(c);
             if (data.endsWith("+IPD,")) {
                 String slen = "";
                 delay(100);
                 while (espSerial->available()) {
                     c = espSerial->read();
-                    if (DEBUG)
-                        Serial.print(c);
+                    Serial.print(c);
                     if (c == ':')
                         break;
                     slen += c;
+                    if (c == ',')
+                        slen = "";
                 }
                 data = "";
                 int len = slen.toInt();
@@ -148,15 +123,13 @@ String ESP8266::readData(const int timeout) {
                         return data;
                     c = espSerial->read();
                     data += c;
-                    if (DEBUG)
-                        Serial.print(c);
+                    Serial.print(c);
                 }
                 return data;
             }
         }
     }
-    if (DEBUG)
-        Serial.print("Timed out\n");
+    Serial.print("Timed out\n");
     return "";
 }
 
@@ -171,8 +144,7 @@ void ESP8266::flushESP() {
 String ESP8266::sendCmd(String cmd) {
     espSerial->println(cmd);
     String response = readResponse();
-    if (DEBUG)
-        Serial.println("----------");
+    Serial.println("----------");
     return response;
 }
 
@@ -193,16 +165,12 @@ String ESP8266::readResponse(const int timeout) {
         while (espSerial->available()) {
             c = espSerial->read();
             msg += c;
-            if (DEBUG)
-                Serial.print(c);
+            Serial.print(c);
             if (msg.endsWith("\r\nOK\r\n") || msg.endsWith("\r\nERROR\r\n")) {
                 return msg;
             }
         }
     }
-    if (DEBUG) {
-        Serial.print("Timed out\n");
-        Serial.println(msg);
-    }
+    Serial.print("Timed out\n");
     return "";
 }

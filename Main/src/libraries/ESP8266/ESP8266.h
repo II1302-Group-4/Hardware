@@ -8,7 +8,7 @@ class ESP8266
 public:
     String ssid;
     String pwd;
-    ESP8266(int rx, int tx, bool debug);
+    ESP8266(int rx, int tx);
     void basicInit();
     void init();
     void flush();
@@ -16,13 +16,12 @@ public:
     bool openTCP(String ip, String port);
     void closeTCP();
     int status();
-    void sendData(String len);
+    void openSendStream(String len);
     void pushData(String data);
     String readData();
     String readData(const int timeout);
 private:
     SoftwareSerial* espSerial = NULL;
-    bool DEBUG;
     void flushESP();
     String sendCmd(String cmd);
     void sendCharCmd(const char *c);
