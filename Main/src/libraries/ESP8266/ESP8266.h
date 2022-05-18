@@ -11,9 +11,10 @@ public:
     ESP8266(int rx, int tx, bool debug);
     void basicInit();
     void init();
+    void flush();
     bool connectToAP(String ssid, String pwd);
     bool openTCP(String ip, String port);
-    int closeTCP();
+    void closeTCP();
     int status();
     void sendData(String len);
     void pushData(String data);

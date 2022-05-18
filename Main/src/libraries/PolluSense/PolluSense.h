@@ -21,5 +21,3 @@ private:
     int bufferToInt(char buffer[], int start, int end);
     void fillCharArray(char buffer[], char * res, int start, int end);
 };
-    
-

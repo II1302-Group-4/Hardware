@@ -8,7 +8,7 @@ int loopLap = 3;
 long unixTime = 0;
 const int GREEN_LED = 8;
 const int RED_LED = 9;
-const int loopDelay = 900;
+const int loopDelay = 10;
 
 PolluSense pollu(2, 3, true);
 
@@ -36,18 +36,14 @@ void setup() {
 void loop() {
     // Get sensor values and increment timer
     unixTime += loopDelay;
-    Serial.print("Lap:");
-    Serial.println(loopLap);
     if (loopLap++ == 3) {
         unixTime = 0;
         while(unixTime == 0)
         {
             pollu.wifiModule->closeTCP();
-            delay(1000);
+            delay(3000);
             unixTime = pollu.getEpoch(DAYTIME_SERVER, DAYTIME_SERVER_PORT);
             delay(200);
-            Serial.println("=== unixtime ===");
-            Serial.println(unixTime);
         }
         loopLap = 0;
     }

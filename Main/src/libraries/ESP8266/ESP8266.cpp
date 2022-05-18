@@ -82,6 +82,7 @@ bool ESP8266::connectToAP(String ssid, String pwd) {
     flushESP();
 }
 
+
 bool ESP8266::openTCP(String ip, String port) {
     String response = sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
 
@@ -92,11 +93,9 @@ bool ESP8266::openTCP(String ip, String port) {
     flushESP();
 }
 
-int ESP8266::closeTCP() {
+void ESP8266::closeTCP() {
     sendCharCmd("AT+CIPCLOSE");
-    if(status() != 4)
-        return 1;
-    return 0;
+    flushESP();
 }
 
 int ESP8266::status() {

@@ -9,8 +9,7 @@ const String DAYTIME_SERVER = "java.lab.ssvl.kth.se";
 const String DAYTIME_SERVER_PORT = "13";
 
 PolluSense instance(2, 3, true);
-const long currentUnixTime = 1652866557; //Needs to be updated before every test.
-
+const long currentUnixTime = 1652883683; //Needs to be updated before every test.
 
 test(getEpoch_validation_compareUnixTime)
 {
@@ -38,6 +37,7 @@ test(getEpoch_wrongHost)
     res = instance.getEpoch("cava.lab.ssvl.kth.se", DAYTIME_SERVER_PORT);
     assertEqual(res, 0);
 }
+
 test(postData_validation)
 {
     instance.wifiModule->closeTCP();

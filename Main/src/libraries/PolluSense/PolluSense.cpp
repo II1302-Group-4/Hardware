@@ -79,7 +79,7 @@ long PolluSense::getEpoch(String host, String port, int timeout) {
     {
         if((time+timeout) < millis())
             return 0;
-        delay(200);
+        delay(1000);
     }
 
     String response = wifiModule->readData();
