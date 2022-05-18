@@ -11,7 +11,8 @@ bool PolluSense::postData(String time, String voc, String co2) {
     String data = String("\r\n\r\n{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}");
     String dataLen = String(data.length() - 4);
 
-    String response = wifiModule->sendData(HTTP_POST_HEADER + dataLen + data);
+    String response;
+    wifiModule->sendData(HTTP_POST_HEADER + dataLen + data, response);
 
     char buffer[13];
     response.toCharArray(buffer, 13);
@@ -60,7 +61,8 @@ long PolluSense::getEpoch(String host, String port, int timeout) {
     int indexA = 0;
     int indexB = 0;
     wifiModule->openTCP(host, port);
-    String response = wifiModule->readData();
+    String response;
+    wifiModule->readData(response);
     Serial.println("== getEpoch ==");
     Serial.println(response);
     int length = response.length();

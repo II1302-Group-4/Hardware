@@ -27,7 +27,7 @@ void setup() {
     // Initialize wifi communication
     pollu.wifiModule->init();
     while (true) {
-        if (pollu.wifiModule->connectToAP(pollu.wifiModule->ssid, pollu.wifiModule->pwd))
+        if (pollu.wifiModule->connectToAP())
             break;
     }
     greenHighRedLow(); 

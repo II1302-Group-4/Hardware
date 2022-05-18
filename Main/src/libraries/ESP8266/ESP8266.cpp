@@ -12,17 +12,19 @@ ESP8266::ESP8266(int rx, int tx, bool debug) {
  * outside source. 
  * Needs hard-coded ssid and password.
  */
-void ESP8266::basicInit(){
+void ESP8266::basicInit() {
     espSerial->begin(9600);
     sendCmd("AT");
     sendCmd("AT+CWMODE=1");
     sendCmd("AT+CIPSERVER=0");
     sendCmd("AT+CIPMUX=0");
-    flushESP();
 }
 
 void ESP8266::init() {
     espSerial->begin(9600);
+
+    sendCmd("AT+RST");
+    delay(1000);
 
     sendCmd("AT+CIPSERVER=0");
     sendCmd("AT+CIPMUX=0");
@@ -35,7 +37,8 @@ void ESP8266::init() {
     sendCmd("AT+CIFSR");
     sendCmd("AT+CWMODE?");
 
-    String msg = readData(900000);
+    String msg;
+    readData(msg, 900000);
 
     if (DEBUG)
         Serial.println("\nMessage from client:" + msg);
@@ -55,7 +58,6 @@ void ESP8266::init() {
     sendCmd("AT+CWMODE=1");
     sendCmd("AT+CIPSERVER=0");
     sendCmd("AT+CIPMUX=0");
-    flushESP();
 }
 
 bool ESP8266::connectToAP() {
@@ -64,12 +66,8 @@ bool ESP8266::connectToAP() {
     espSerial->print("\",\"");
     espSerial->print(pwd);
     espSerial->println("\"");
-    String response = readResponse();
-    if (response.endsWith("\r\nOK\r\n"))
-        return true;
-    else
-        return false;
-    flushESP();
+    bool response = readResponse();
+    return response;
 }
 
 bool ESP8266::openTCP(String ip, String port) {
@@ -77,13 +75,8 @@ bool ESP8266::openTCP(String ip, String port) {
     espSerial->print(ip);
     espSerial->print("\",");
     espSerial->println(port);
-    String response = readResponse();
-
-    if (response.endsWith("\r\nOK\r\n"))
-        return true;
-    else
-        return false;
-    flushESP();
+    bool result = readResponse();
+    return result;
 }
 
 int ESP8266::closeTCP() {
@@ -94,35 +87,48 @@ int ESP8266::closeTCP() {
 }
 
 int ESP8266::status() {
-    String response = sendCmd("AT+CIPSTATUS");
-    int start = response.lastIndexOf("\r\nSTATUS:") + 9;
-    return response.substring(start, start + 1).toInt();
+    /*espSerial->println("AT+CIPSTATUS");
+    char buffer[300];
+    readResponse()
+    char stat[] = "\r\nSTATUS:";
+    int spos = 0, pos = 0;
+    while (true) {
+        if (c == stat[spos++]) 
+            if (stat[spos] == '\0')
+                break;
+        else
+            spos = 0;
+        pos++;
+        if (buffer[pos] == '\0')
+            break;
+    }
+    return response.substring(pos, pos + 1).toInt();*/
+    return 1;
 }
 
-String ESP8266::sendData(String &data) {
+bool ESP8266::sendData(String &data, String &res) {
     espSerial->print("AT+CIPSEND=");
     espSerial->println(data.length());
     delay(500);
     espSerial->print(data);
-
-    return readData();
+    return readData(res);
 }
 
-String ESP8266::readData() {
-    return readData(15000);
+bool ESP8266::readData(String &res) {
+    return readData(res, 15000);
 }
 
-String ESP8266::readData(const int timeout) {
-    String data = "";
+bool ESP8266::readData(String &res, const int timeout) {
+    res = "";
     char c;
     int time = millis();
     while ((time+timeout) > millis()) {
         while (espSerial->available()) {
             c = espSerial->read();
-            data += c;
+            res += c;
             if (DEBUG)
                 Serial.print(c);
-            if (data.endsWith("+IPD,")) {
+            if (res.endsWith("+IPD,")) {
                 String slen = "";
                 delay(100);
                 while (espSerial->available()) {
@@ -135,25 +141,26 @@ String ESP8266::readData(const int timeout) {
                     if (c == ',')
                         slen = "";
                 }
-                data = "";
+                res = "";
                 int len = slen.toInt();
                 for (int i = 0; i < len; i++) {
                     delay(1);
                     if (!espSerial->available())
-                        return data;
+                        return true;
                     c = espSerial->read();
-                    data += c;
+                    res += c;
                     if (DEBUG)
                         Serial.print(c);
+                    Serial.println(".");
                 }
-                return data;
+                return true;
             }
         }
     }
     if (DEBUG)
-        Serial.println(data);
+        Serial.println(res);
         Serial.print("Timed out\n");
-    return "";
+    return false;
 }
 
 /*--------------------Private--------------------*/
@@ -166,19 +173,20 @@ void ESP8266::flushESP() {
     }
 }
 
-String ESP8266::sendCmd(const char* c) {
-    flushESP();
+bool ESP8266::sendCmd(const char* c) {
     espSerial->println(c);
-    return readResponse();
-}
-
-String ESP8266::readResponse() {
-    return readResponse(15000);
-}
-
-String ESP8266::readResponse(const int timeout) {
     const short buffSize = 300;
-    char msg[buffSize];
+    char buffer[buffSize];
+    return readResponse(buffer, buffSize);
+}
+
+bool ESP8266::readResponse(const int timeout) {
+    const short buffSize = 300;
+    char buffer[buffSize];
+    return readResponse(buffer, buffSize);
+}
+
+bool ESP8266::readResponse(char* buffer, const short buffSize, const int timeout) {
     short pos = 0;
     char c;
     long int time = millis();
@@ -186,31 +194,33 @@ String ESP8266::readResponse(const int timeout) {
         for (; espSerial->available(); pos++) {
             c = espSerial->read();
             if (pos < buffSize - 1)
-                msg[pos] = c;
+                buffer[pos] = c;
             else {
                 flushESP();
                 Serial.print("\nResponse Overflow! pos = ");
                 Serial.println(pos);
-                msg[pos] = '\0';
-                return String(msg);
+                buffer[pos] = '\0';
+                return false;
             }
             if (DEBUG)
                 Serial.print(c);
-            if ((pos >= 5 && msg[pos-5]=='\r' && msg[pos-4]=='\n' && msg[pos-3]=='O' &&
-                msg[pos-2]=='K' && msg[pos-1]=='\r' && msg[pos]=='\n') || 
-                (pos >= 8 && msg[pos-8]=='\r' && msg[pos-7]=='\n' && msg[pos-6]=='E' &&
-                msg[pos-5]=='R' && msg[pos-4]=='R' && msg[pos-3]=='O' &&
-                msg[pos-2]=='R' && msg[pos-1]=='\r' && msg[pos]=='\n')) 
+            if (pos >= 5 && buffer[pos-5]=='\r' && buffer[pos-4]=='\n' && buffer[pos-3]=='O' &&
+                buffer[pos-2]=='K' && buffer[pos-1]=='\r' && buffer[pos]=='\n')
             {
-                msg[++pos] = '\0';
-                return String(msg);
+                buffer[++pos] = '\0';
+                return true;
+            }
+            if (pos >= 8 && buffer[pos-8]=='\r' && buffer[pos-7]=='\n' && buffer[pos-6]=='E' &&
+                buffer[pos-5]=='R' && buffer[pos-4]=='R' && buffer[pos-3]=='O' &&
+                buffer[pos-2]=='R' && buffer[pos-1]=='\r' && buffer[pos]=='\n')
+            {
+                buffer[++pos] = '\0';
+                return false;
             }
         }
     }
-    msg[++pos] = '\0';
-    if (DEBUG) {
-        Serial.println(msg);
+    if (DEBUG) 
         Serial.print("Timed out\n");
-    }
-    return "";
+    buffer[pos] = '\0';
+    return false;
 }

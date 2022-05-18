@@ -15,16 +15,15 @@ public:
     bool openTCP(String ip, String port);
     int closeTCP();
     int status();
-    String sendData(String &data);
-    String readData();
-    String readData(const int timeout);
+    bool sendData(String &data, String &res);
+    bool readData(String &res);
+    bool readData(String &res, const int timeout);
 private:
     SoftwareSerial* espSerial = NULL;
     bool DEBUG;
     void flushESP();
-    String sendCmd(const char* c);
-    String readResponse();
-    String readResponse(const int timeout);
-    String readResponseChar(const int timeout);
+    bool sendCmd(const char* c);
+    bool readResponse(const int timeout = 15000);
+    bool readResponse(char* buffer, const short buffSize, const int timeout = 15000);
 };
 
