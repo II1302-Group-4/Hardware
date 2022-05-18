@@ -7,6 +7,10 @@ PolluSense::PolluSense(int rx, int tx, bool debug) {
 
 /*--------------------Public--------------------*/
 
+/*
+ * Sends data to the PolluSense-server.
+ * The data is in JSON-format and the data is send with HTTP 1/1.
+ */
 bool PolluSense::postData(String time, String voc, String co2) {
     String data = String("\r\n\r\n{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}");
     String dataLen = String(data.length() - 4);
@@ -16,24 +20,29 @@ bool PolluSense::postData(String time, String voc, String co2) {
     wifiModule->pushData(HTTP_POST_HEADER);
     wifiModule->pushData(dataLen);
     wifiModule->pushData(data);
+
     String response = wifiModule->readData();
     if(response == "")
         return false;
 
     char buffer[13];
     response.toCharArray(buffer, 13);
-    return validateResponse(buffer);
-}
 
-long PolluSense::getEpoch(String host, String port) {
-    return getEpoch(host, port, 3);
+    if(buffer[9] == 50 && buffer[10] == 48 && buffer[11] == 49)
+        return true;
+    else
+        return false;
 }
-/*--------------------Private--------------------*/
 
 /*
  * This function returns the unix time, setup to work in
  * GMT+2
  */
+long PolluSense::getEpoch(String host, String port) {
+    return getEpoch(host, port, 3000);
+}
+/*--------------------Private--------------------*/
+
 
 int PolluSense::getIndex(char buffer[], int pos, char divider){
     int i = pos;
@@ -63,16 +72,23 @@ void PolluSense::fillCharArray(char buffer[], char * res, int start, int end){
 }
 
 long PolluSense::getEpoch(String host, String port, int timeout) {
-    if(port == "13");
-    int indexA = 0;
-    int indexB = 0;
-    wifiModule->openTCP(host, port);
+    if(port != "13")
+        return 0;
+    long time = millis();
+    while(!wifiModule->openTCP(host, port))
+    {
+        if((time+timeout) < millis())
+            return 0;
+        delay(200);
+    }
+
     String response = wifiModule->readData();
-    Serial.println("== getEpoch ==");
-    Serial.println(response);
     int length = response.length();
     if(length == 0)
         return 0;
+
+    int indexA = 0;
+    int indexB = 0;
     char buffer[length];
     response.toCharArray(buffer, length);
 
@@ -100,7 +116,6 @@ long PolluSense::getEpoch(String host, String port, int timeout) {
 long PolluSense::calcUnixTime(int year, char month[], int day, int hour, int minute, int second) {
     long unixTime = 0;
     int days_since_epoch = 0;
-
 
    if(year < 1970)
         return 0;
@@ -181,9 +196,3 @@ int PolluSense::getDays(char month[]) {
     return -1;
 }
 
-bool PolluSense::validateResponse(char buffer[]){
-    if(buffer[9] == 50 && buffer[10] == 48 && buffer[11] == 49)
-        return true;
-    else
-        return false;
-}
