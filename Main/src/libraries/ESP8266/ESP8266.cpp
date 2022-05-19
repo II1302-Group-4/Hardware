@@ -67,7 +67,7 @@ bool ESP8266::connectToAP() {
 }
 
 
-bool ESP8266::openTCP(String ip, String port) {
+bool ESP8266::openTCP(const String& ip, const String& port) {
     espSerial->print("AT+CIPSTART=\"TCP\",\"");
     espSerial->print(ip);
     espSerial->print("\",");
@@ -92,14 +92,14 @@ int ESP8266::status() {
     return response.substring(start, start + 1).toInt();
 }
 
-void ESP8266::openSendStream(String len) {
+void ESP8266::openSendStream(const int& len) {
     espSerial->print("AT+CIPSEND=");
     espSerial->println(len);
     readResponse();
     delay(500);
 }
 
-void ESP8266::pushData(String data) {
+void ESP8266::pushData(const String& data) {
     Serial.print(data);
     espSerial->print(data);
 }
@@ -155,7 +155,7 @@ void ESP8266::flushESP() {
         espSerial->read();
 }
 
-void ESP8266::sendCmd(const char *c) {
+void ESP8266::sendCmd(const char* c) {
     espSerial->println(c);
     readResponse();
 }

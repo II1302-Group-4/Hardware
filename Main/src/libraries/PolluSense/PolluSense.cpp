@@ -14,7 +14,7 @@ PolluSense::PolluSense(int rx, int tx) {
 bool PolluSense::postData(String time, String voc, String co2) {
     String data = String("\r\n\r\n{\"time\": \"" + time + "\",\"VOC\": \"" + voc + "\",\"CO2\": \"" + co2 + "\"}");
     String dataLen = String(data.length() - 4);
-    String len = String((HTTP_POST_HEADER.length() + dataLen.length() + data.length()));
+    int len = HTTP_POST_HEADER.length() + dataLen.length() + data.length();
 
     wifiModule->openSendStream(len);
     wifiModule->pushData(HTTP_POST_HEADER);

@@ -13,17 +13,17 @@ public:
     void init();
     void flush();
     bool connectToAP();
-    bool openTCP(String ip, String port);
+    bool openTCP(const String& ip, const String& port);
     void closeTCP();
     int status();
-    void openSendStream(String len);
-    void pushData(String data);
+    void openSendStream(const int& len);
+    void pushData(const String& data);
     String readData();
     String readData(const int timeout);
 private:
     SoftwareSerial* espSerial = NULL;
     void flushESP();
-    void sendCmd(const char *c);
+    void sendCmd(const char* c);
     String readResponse();
     String readResponse(const int timeout);
 };
