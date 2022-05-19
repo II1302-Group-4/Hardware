@@ -13,25 +13,28 @@ ESP8266::ESP8266(int rx, int tx) {
  */
 void ESP8266::basicInit() {
     espSerial->begin(9600);
-    sendCharCmd("AT");
-    sendCharCmd("AT+CWMODE=1");
-    sendCharCmd("AT+CIPSERVER=0");
-    sendCharCmd("AT+CIPMUX=0");
+    sendCmd("AT");
+    sendCmd("AT+CWMODE=1");
+    sendCmd("AT+CIPSERVER=0");
+    sendCmd("AT+CIPMUX=0");
     flushESP();
 }
 
 void ESP8266::init() {
     espSerial->begin(9600);
-    sendCharCmd("AT+CIPSERVER=0");
-    sendCharCmd("AT+CIPMUX=0");
-    sendCharCmd("AT+CIPMODE=0");
-    sendCharCmd("AT+CWMODE=3");
-    sendCharCmd("AT+CIPMUX=1");
-    sendCharCmd("AT+CIPSERVER=1,5000");
-    sendCharCmd("AT+CIFSR");
-    sendCharCmd("AT+CWMODE?");
+    sendCmd("AT+RST");
+    delay(1000);
+    flushESP();
+    sendCmd("AT+CIPSERVER=0");
+    sendCmd("AT+CIPMUX=0");
+    sendCmd("AT+CIPMODE=0");
+    sendCmd("AT+CWMODE=3");
+    sendCmd("AT+CIPMUX=1");
+    sendCmd("AT+CIPSERVER=1,5000");
+    sendCmd("AT+CIFSR");
+    sendCmd("AT+CWMODE?");
     String msg = readData(900000);
-    Serial.println("Message from client:" + msg);
+    Serial.println("\nMessage from client:" + msg);
     // Break out parts of msg
     int ipdPos = msg.indexOf(':');
     msg = msg.substring(ipdPos + 1);
@@ -41,16 +44,21 @@ void ESP8266::init() {
     ssid.trim();
     pwd.trim();
     Serial.println("msg: " + ssid + pwd);
-    sendCharCmd("AT+CIPSERVER=0");
-    sendCharCmd("AT");
-    sendCharCmd("AT+CWMODE=1");
-    sendCharCmd("AT+CIPSERVER=0");
-    sendCharCmd("AT+CIPMUX=0");
+    sendCmd("AT+CIPSERVER=0");
+    sendCmd("AT");
+    sendCmd("AT+CWMODE=1");
+    sendCmd("AT+CIPSERVER=0");
+    sendCmd("AT+CIPMUX=0");
     flushESP();
 }
 
-bool ESP8266::connectToAP(String ssid, String pwd) {
-    String response = sendCmd("AT+CWJAP=\"" + ssid + "\",\"" + pwd + "\"");
+bool ESP8266::connectToAP() {
+    espSerial->print("AT+CWJAP=\"");
+    espSerial->print(ssid);
+    espSerial->print("\",\"");
+    espSerial->print(pwd);
+    espSerial->println("\"");
+    String response = readResponse();
     if (response.endsWith("\r\nOK\r\n"))
         return true;
     else
@@ -60,8 +68,11 @@ bool ESP8266::connectToAP(String ssid, String pwd) {
 
 
 bool ESP8266::openTCP(String ip, String port) {
-    String response = sendCmd("AT+CIPSTART=\"TCP\",\"" + ip + "\"," + port);
-
+    espSerial->print("AT+CIPSTART=\"TCP\",\"");
+    espSerial->print(ip);
+    espSerial->print("\",");
+    espSerial->println(port);
+    String response = readResponse();
     if (response.endsWith("\r\nOK\r\n"))
         return true;
     else
@@ -70,18 +81,21 @@ bool ESP8266::openTCP(String ip, String port) {
 }
 
 void ESP8266::closeTCP() {
-    sendCharCmd("AT+CIPCLOSE");
+    sendCmd("AT+CIPCLOSE");
     flushESP();
 }
 
 int ESP8266::status() {
-    String response = sendCmd("AT+CIPSTATUS");
+    espSerial->println("AT+CIPSTATUS");
+    String response = readResponse();
     int start = response.lastIndexOf("\r\nSTATUS:") + 9;
     return response.substring(start, start + 1).toInt();
 }
 
 void ESP8266::openSendStream(String len) {
-    sendCmd("AT+CIPSEND=" + len);
+    espSerial->print("AT+CIPSEND=");
+    espSerial->println(len);
+    readResponse();
     delay(500);
 }
 
@@ -141,14 +155,7 @@ void ESP8266::flushESP() {
         espSerial->read();
 }
 
-String ESP8266::sendCmd(String cmd) {
-    espSerial->println(cmd);
-    String response = readResponse();
-    Serial.println("----------");
-    return response;
-}
-
-void ESP8266::sendCharCmd(const char *c) {
+void ESP8266::sendCmd(const char *c) {
     espSerial->println(c);
     readResponse();
 }

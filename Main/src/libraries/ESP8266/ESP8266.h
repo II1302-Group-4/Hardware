@@ -12,7 +12,7 @@ public:
     void basicInit();
     void init();
     void flush();
-    bool connectToAP(String ssid, String pwd);
+    bool connectToAP();
     bool openTCP(String ip, String port);
     void closeTCP();
     int status();
@@ -23,10 +23,8 @@ public:
 private:
     SoftwareSerial* espSerial = NULL;
     void flushESP();
-    String sendCmd(String cmd);
-    void sendCharCmd(const char *c);
+    void sendCmd(const char *c);
     String readResponse();
     String readResponse(const int timeout);
-    String readResponseChar(const int timeout);
 };
 
