@@ -11,7 +11,6 @@ public:
     ESP8266(int rx, int tx);
     void basicInit();
     void init();
-    void flush();
     bool connectToAP();
     bool openTCP(const String& ip, const String& port);
     void closeTCP();
