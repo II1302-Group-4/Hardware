@@ -13,8 +13,11 @@ ESP8266::ESP8266(int rx, int tx) {
  */
 void ESP8266::basicInit() {
     espSerial->begin(9600);
+    sendCmd("AT+RST");
+    delay(1000);
+    flushESP();
     ssid = "Android Jakob";
-    pwd = "leonboi11";
+    pwd = "password123";
     sendCmd("AT");
     sendCmd("AT+CWMODE=1");
     sendCmd("AT+CIPSERVER=0");
